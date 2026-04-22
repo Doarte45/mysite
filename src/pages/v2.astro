@@ -1,0 +1,647 @@
+---
+import "@fontsource-variable/archivo";
+import BaseHead from "../layouts/BaseHead.astro";
+import VersionSwitcher from "../components/VersionSwitcher.astro";
+import { cv } from "../data/cv.ts";
+
+const sections = [
+  { n: "01", label: "EXPERIENCE" },
+  { n: "02", label: "PROJECTS" },
+  { n: "03", label: "CRAFT" },
+  { n: "04", label: "EDUCATION" },
+] as const;
+---
+
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`${cv.name} — Swiss`}
+      description={`${cv.name}, ${cv.role}. ${cv.tagline}`}
+    />
+  </head>
+  <body class="v2">
+    <div class="grid-overlay" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="top__left">
+        <span class="dot" aria-hidden="true"></span>
+        <span class="top__title">{cv.name}</span>
+      </div>
+      <div class="top__right">
+        <span>{cv.location}</span>
+        <span class="top__year">{new Date().getFullYear()}</span>
+      </div>
+    </header>
+
+    <main class="canvas">
+      <section class="hero">
+        <p class="hero__tag">CURRICULUM VITÆ / EDITION 04</p>
+        <h1 class="hero__name">
+          {cv.name.split(" ").map((part, i) => (
+            <span class="hero__word" style={`--i: ${i}`}>{part}</span>
+          ))}
+        </h1>
+        <div class="hero__under">
+          <p class="hero__role">{cv.role}.</p>
+          <p class="hero__tagline">{cv.tagline}</p>
+        </div>
+      </section>
+
+      <section class="summary">
+        <p class="summary__label">— ABOUT</p>
+        <p class="summary__body">{cv.summary}</p>
+      </section>
+
+      <section class="contacts">
+        <p class="summary__label">— CONTACT</p>
+        <ul class="contacts__list">
+          {
+            cv.contact.map((c) => (
+              <li>
+                <span class="contacts__key">{c.label}</span>
+                <a class="contacts__val" href={c.href}>
+                  {c.value}
+                  <span class="arr" aria-hidden="true">→</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      {/* Section 01: Experience */}
+      <section class="chapter">
+        <header class="chapter__head">
+          <span class="chapter__n">{sections[0]?.n}</span>
+          <span class="chapter__label">{sections[0]?.label}</span>
+          <span class="chapter__count">{cv.experience.length} entries</span>
+        </header>
+
+        {
+          cv.experience.map((job) => (
+            <article class="row">
+              <div class="row__left">
+                <p class="row__period">{job.period}</p>
+                <p class="row__loc">{job.location}</p>
+              </div>
+              <div class="row__right">
+                <h3 class="row__title">{job.role}</h3>
+                <p class="row__company">{job.company}</p>
+                <p class="row__sum">{job.summary}</p>
+                <ul class="row__list">
+                  {job.highlights.map((h) => <li>{h}</li>)}
+                </ul>
+              </div>
+            </article>
+          ))
+        }
+      </section>
+
+      {/* Section 02: Projects */}
+      <section class="chapter">
+        <header class="chapter__head">
+          <span class="chapter__n">{sections[1]?.n}</span>
+          <span class="chapter__label">{sections[1]?.label}</span>
+          <span class="chapter__count">{cv.projects.length} entries</span>
+        </header>
+
+        <ol class="proj-list">
+          {
+            cv.projects.map((p, i) => (
+              <li class="proj">
+                <span class="proj__num">{String(i + 1).padStart(2, "0")}</span>
+                <div class="proj__body">
+                  <div class="proj__head">
+                    <h3 class="proj__name">
+                      {p.url ? <a href={p.url}>{p.name}</a> : p.name}
+                    </h3>
+                    <span class="proj__year">{p.year}</span>
+                  </div>
+                  <p class="proj__desc">{p.description}</p>
+                </div>
+                <ul class="proj__stack">
+                  {p.stack.map((s) => <li>{s}</li>)}
+                </ul>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      {/* Section 03: Skills */}
+      <section class="chapter">
+        <header class="chapter__head">
+          <span class="chapter__n">{sections[2]?.n}</span>
+          <span class="chapter__label">{sections[2]?.label}</span>
+          <span class="chapter__count">{cv.skills.length} categories</span>
+        </header>
+
+        <div class="skills">
+          {
+            cv.skills.map((g) => (
+              <div class="skill">
+                <p class="skill__heading">{g.heading}</p>
+                <p class="skill__items">
+                  {g.items.join(", ")}.
+                </p>
+              </div>
+            ))
+          }
+        </div>
+      </section>
+
+      {/* Section 04: Education */}
+      <section class="chapter">
+        <header class="chapter__head">
+          <span class="chapter__n">{sections[3]?.n}</span>
+          <span class="chapter__label">{sections[3]?.label}</span>
+          <span class="chapter__count">{cv.education.length} entry</span>
+        </header>
+
+        {
+          cv.education.map((e) => (
+            <article class="row">
+              <div class="row__left">
+                <p class="row__period">{e.period}</p>
+              </div>
+              <div class="row__right">
+                <h3 class="row__title">{e.degree}</h3>
+                <p class="row__company">{e.institution}</p>
+                {e.detail && <p class="row__sum">{e.detail}</p>}
+              </div>
+            </article>
+          ))
+        }
+      </section>
+
+      <footer class="end">
+        <span class="dot" aria-hidden="true"></span>
+        <span>End of document.</span>
+      </footer>
+    </main>
+
+    <VersionSwitcher />
+
+    <style is:global>
+      .v2 {
+        --ink: #0a0a0a;
+        --paper: #ffffff;
+        --rule: #0a0a0a;
+        --accent: #e63946;
+        --muted: #6a6a6a;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+        font-size: 15px;
+        line-height: 1.55;
+        font-variation-settings: "wdth" 100;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .v2 ::selection {
+        background: var(--accent);
+        color: var(--paper);
+      }
+
+      .v2 .grid-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        background-image:
+          linear-gradient(to right, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+        background-size: calc(100vw / 12) 100%;
+        opacity: 0.6;
+      }
+
+      /* ─── Top bar ───────────────────────────────── */
+      .v2 .top {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 32px;
+        background: var(--paper);
+        border-bottom: 1px solid var(--ink);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .v2 .top__left,
+      .v2 .top__right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .v2 .dot {
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+      }
+      .v2 .top__year {
+        color: var(--muted);
+      }
+
+      /* ─── Canvas ────────────────────────────────── */
+      .v2 .canvas {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 48px 32px 140px;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* ─── Hero ──────────────────────────────────── */
+      .v2 .hero {
+        margin-bottom: 96px;
+        padding-top: 24px;
+      }
+      .v2 .hero__tag {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.24em;
+        color: var(--accent);
+        margin: 0 0 32px;
+      }
+      .v2 .hero__name {
+        font-size: clamp(72px, 14vw, 208px);
+        font-weight: 800;
+        line-height: 0.86;
+        letter-spacing: -0.045em;
+        margin: 0;
+        font-variation-settings: "wdth" 100;
+        color: var(--ink);
+      }
+      .v2 .hero__word {
+        display: inline-block;
+        margin-right: 0.08em;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: v2-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        animation-delay: calc(var(--i) * 80ms);
+      }
+      @keyframes v2-rise {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .v2 .hero__word:last-child {
+        color: var(--accent);
+      }
+      .v2 .hero__under {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 48px;
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid var(--ink);
+      }
+      .v2 .hero__role {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0;
+      }
+      .v2 .hero__tagline {
+        font-size: 22px;
+        font-weight: 400;
+        color: var(--muted);
+        margin: 0;
+        max-width: 640px;
+      }
+
+      /* ─── Generic labels ────────────────────────── */
+      .v2 .summary__label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.24em;
+        color: var(--accent);
+        margin: 0 0 16px;
+      }
+
+      .v2 .summary {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 48px;
+        margin-bottom: 64px;
+        padding-bottom: 48px;
+        border-bottom: 1px solid var(--ink);
+      }
+      .v2 .summary__body {
+        font-size: 19px;
+        line-height: 1.55;
+        margin: 0;
+        max-width: 640px;
+      }
+
+      /* ─── Contacts ──────────────────────────────── */
+      .v2 .contacts {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 48px;
+        margin-bottom: 96px;
+      }
+      .v2 .contacts__list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .v2 .contacts__list li {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--ink);
+        align-items: center;
+      }
+      .v2 .contacts__list li:first-child {
+        border-top: 1px solid var(--ink);
+      }
+      .v2 .contacts__key {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .v2 .contacts__val {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--ink);
+        text-decoration: none;
+      }
+      .v2 .contacts__val:hover {
+        color: var(--accent);
+      }
+      .v2 .arr {
+        color: var(--accent);
+        transition: transform 140ms ease;
+      }
+      .v2 .contacts__val:hover .arr {
+        transform: translateX(4px);
+      }
+
+      /* ─── Chapter ───────────────────────────────── */
+      .v2 .chapter {
+        margin-bottom: 96px;
+      }
+      .v2 .chapter__head {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 24px;
+        align-items: baseline;
+        padding-bottom: 16px;
+        margin-bottom: 40px;
+        border-bottom: 1px solid var(--ink);
+      }
+      .v2 .chapter__n {
+        font-size: clamp(48px, 6vw, 84px);
+        font-weight: 800;
+        line-height: 0.8;
+        letter-spacing: -0.04em;
+        color: var(--accent);
+      }
+      .v2 .chapter__label {
+        font-size: clamp(20px, 2.2vw, 28px);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .v2 .chapter__count {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      /* ─── Rows (experience + education) ─────────── */
+      .v2 .row {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 48px;
+        padding: 24px 0;
+        border-top: 1px solid var(--ink);
+      }
+      .v2 .row:last-of-type {
+        border-bottom: 1px solid var(--ink);
+      }
+      .v2 .row__period {
+        font-size: 14px;
+        font-weight: 700;
+        margin: 0 0 4px;
+        letter-spacing: -0.01em;
+      }
+      .v2 .row__loc {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .v2 .row__title {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 4px;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+      .v2 .row__company {
+        font-size: 15px;
+        margin: 0 0 16px;
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .v2 .row__sum {
+        margin: 0 0 16px;
+        max-width: 620px;
+      }
+      .v2 .row__list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .v2 .row__list li {
+        padding: 6px 0;
+        border-top: 1px solid rgba(10, 10, 10, 0.15);
+        max-width: 620px;
+      }
+      .v2 .row__list li:first-child {
+        border-top: 0;
+      }
+
+      /* ─── Projects ──────────────────────────────── */
+      .v2 .proj-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .v2 .proj {
+        display: grid;
+        grid-template-columns: 80px 2fr 1fr;
+        gap: 32px;
+        padding: 28px 0;
+        border-top: 1px solid var(--ink);
+        align-items: start;
+      }
+      .v2 .proj:last-child {
+        border-bottom: 1px solid var(--ink);
+      }
+      .v2 .proj__num {
+        font-size: 40px;
+        font-weight: 800;
+        line-height: 0.9;
+        letter-spacing: -0.04em;
+      }
+      .v2 .proj__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+        margin-bottom: 8px;
+      }
+      .v2 .proj__name {
+        font-size: 26px;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+      .v2 .proj__name a {
+        color: var(--ink);
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        transition: border-color 120ms;
+      }
+      .v2 .proj__name a:hover {
+        border-bottom-color: var(--accent);
+      }
+      .v2 .proj__year {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+      .v2 .proj__desc {
+        margin: 0;
+        max-width: 540px;
+      }
+      .v2 .proj__stack {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .v2 .proj__stack li {
+        padding: 2px 0;
+      }
+
+      /* ─── Skills ────────────────────────────────── */
+      .v2 .skills {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px 48px;
+      }
+      .v2 .skill {
+        padding-top: 16px;
+        border-top: 1px solid var(--ink);
+      }
+      .v2 .skill__heading {
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin: 0 0 8px;
+        color: var(--accent);
+      }
+      .v2 .skill__items {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.5;
+      }
+
+      /* ─── End ───────────────────────────────────── */
+      .v2 .end {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 72px;
+        padding-top: 24px;
+        border-top: 1px solid var(--ink);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      /* ─── Responsive ────────────────────────────── */
+      @media (max-width: 780px) {
+        .v2 .top {
+          padding: 12px 18px;
+        }
+        .v2 .canvas {
+          padding: 32px 18px 140px;
+        }
+        .v2 .hero__under,
+        .v2 .summary,
+        .v2 .contacts,
+        .v2 .row {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        .v2 .contacts__list li {
+          grid-template-columns: 1fr;
+          gap: 6px;
+          padding: 12px 0;
+        }
+        .v2 .contacts__val {
+          font-size: 14px;
+        }
+        .v2 .chapter__head {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+        .v2 .proj {
+          grid-template-columns: 48px 1fr;
+          gap: 16px 20px;
+        }
+        .v2 .proj__stack {
+          grid-column: 1 / -1;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .v2 .skills {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ─── Print ─────────────────────────────────── */
+      @media print {
+        .v2 {
+          font-size: 10pt;
+        }
+        .v2 .top,
+        .v2 .grid-overlay,
+        .v2 .end {
+          display: none;
+        }
+        .v2 .canvas {
+          padding: 0;
+          max-width: none;
+        }
+        .v2 .hero__name {
+          font-size: 40pt;
+        }
+      }
+    </style>
+  </body>
+</html>
