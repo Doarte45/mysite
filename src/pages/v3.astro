@@ -1,0 +1,622 @@
+---
+import BaseHead from "../layouts/BaseHead.astro";
+import VersionSwitcher from "../components/VersionSwitcher.astro";
+import { cv } from "../data/cv.ts";
+
+const nameParts = cv.name.split(" ");
+const firstName = nameParts[0];
+const lastName = nameParts.slice(1).join(" ");
+---
+
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`${cv.name} — Topology`}
+      description={`${cv.name}, ${cv.role}. ${cv.tagline}`}
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem("v3-theme");
+          var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var theme = stored || (prefersDark ? "dark" : "light");
+          document.documentElement.dataset.v3Theme = theme;
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="v3">
+    <button
+      class="theme-toggle"
+      type="button"
+      aria-label="Toggle color theme"
+      aria-pressed="false"
+      data-theme-toggle
+    >
+      <svg class="icon icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4" fill="currentColor" />
+        <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <line x1="12" y1="2" x2="12" y2="5" />
+          <line x1="12" y1="19" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="5" y2="12" />
+          <line x1="19" y1="12" x2="22" y2="12" />
+          <line x1="4.5" y1="4.5" x2="6.5" y2="6.5" />
+          <line x1="17.5" y1="17.5" x2="19.5" y2="19.5" />
+          <line x1="4.5" y1="19.5" x2="6.5" y2="17.5" />
+          <line x1="17.5" y1="6.5" x2="19.5" y2="4.5" />
+        </g>
+      </svg>
+      <svg class="icon icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M20 14.5A8 8 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"
+          fill="currentColor"
+        />
+      </svg>
+    </button>
+
+    <div class="network-lines" aria-hidden="true">
+      <svg width="100%" height="100%">
+        <line class="net-line net-line--strong" x1="10%" y1="10%" x2="90%" y2="90%" stroke-width="1" />
+        <line class="net-line net-line--strong" x1="90%" y1="10%" x2="10%" y2="90%" stroke-width="1" />
+        <line class="net-line net-line--faint" x1="50%" y1="0%" x2="50%" y2="100%" stroke-width="1" />
+      </svg>
+    </div>
+
+    <main>
+      <div class="top-layout">
+        <header>
+          <div class="node-label">NODE_AUTH: 10.0.0.1</div>
+          <h1>{firstName}{lastName && (<><br />{lastName}</>)}</h1>
+          <p class="tagline">{cv.role}</p>
+          <p class="sub-tagline">{cv.tagline}</p>
+        </header>
+
+        <section class="bio">
+          <div class="network-tag">PACKET_INSPECTION</div>
+          <p>{cv.summary}</p>
+        </section>
+      </div>
+
+      <div class="content-sections">
+        <section class="contact contact--banner">
+          <div class="header-with-shape">
+            <div class="mini-triangle"></div>
+            <h2>UPLINK_PROTOCOL</h2>
+          </div>
+          <div class="contact-links">
+            {
+              cv.contact.map((c) => (
+                <a href={c.href}>{c.label.toUpperCase()}_{c.value}</a>
+              ))
+            }
+          </div>
+        </section>
+
+        <section class="experience">
+          <div class="header-with-shape">
+            <div class="mini-square"></div>
+            <h2>HOP_HISTORY</h2>
+          </div>
+          <div class="exp-grid">
+            {
+              cv.experience.map((exp) => (
+                <div class="exp-card">
+                  <span class="year">SRC: {exp.period}</span>
+                  <h3>{exp.role}</h3>
+                  <p class="company">
+                    {exp.company} — {exp.location}
+                  </p>
+                  <p class="desc">{exp.summary}</p>
+                  <ul class="hl-list">
+                    {exp.highlights.map((h) => (
+                      <li>{h}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))
+            }
+          </div>
+        </section>
+
+        <section class="experience">
+          <div class="header-with-shape">
+            <div class="mini-square"></div>
+            <h2>MISSION_LOG</h2>
+          </div>
+          <div class="exp-grid">
+            {
+              cv.projects.map((p) => (
+                <div class="exp-card">
+                  <span class="year">REF: {p.year}</span>
+                  <h3>{p.url ? <a class="proj-link" href={p.url}>{p.name}</a> : p.name}</h3>
+                  <p class="company">{p.stack.join(" / ")}</p>
+                  <p class="desc">{p.description}</p>
+                </div>
+              ))
+            }
+          </div>
+        </section>
+
+        <div class="edu-cert-split">
+          <section class="experience">
+            <div class="header-with-shape">
+              <div class="mini-square"></div>
+              <h2>TRAINING_DATA</h2>
+            </div>
+            <div class="edu-list">
+              {
+                cv.education.map((e) => (
+                  <div class="exp-card">
+                    <span class="year">{e.period}</span>
+                    <h3>{e.degree}</h3>
+                    <p class="company">{e.institution}</p>
+                    {e.detail && <p class="desc">{e.detail}</p>}
+                  </div>
+                ))
+              }
+            </div>
+          </section>
+
+          <section class="experience">
+            <div class="header-with-shape">
+              <div class="mini-square"></div>
+              <h2>CRED_CHAIN</h2>
+            </div>
+            <div class="edu-list">
+              {
+                cv.certifications.map((c) => (
+                  <div class="exp-card">
+                    <span class="year">{c.date}</span>
+                    <h3>{c.name}</h3>
+                    <p class="company">{c.issuer}</p>
+                    {c.detail && <p class="desc">{c.detail}</p>}
+                  </div>
+                ))
+              }
+            </div>
+          </section>
+        </div>
+
+        <section class="skills">
+          <div class="header-with-shape">
+            <div class="mini-circle"></div>
+            <h2>SECURITY_STACK</h2>
+          </div>
+          <div class="skill-groups">
+            {
+              cv.skills.map((g) => (
+                <div class="skill-group">
+                  <h3 class="skill-group__heading">{g.heading}</h3>
+                  <div class="skill-list">
+                    {g.items.map((s) => (
+                      <div class="skill-item">{s}</div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <VersionSwitcher />
+
+    <script>
+      const root = document.documentElement;
+      const body = document.body;
+      const btn = document.querySelector("[data-theme-toggle]");
+
+      function apply(theme: string) {
+        body.setAttribute("data-theme", theme);
+        root.dataset.v3Theme = theme;
+        btn?.setAttribute("aria-pressed", String(theme === "dark"));
+      }
+
+      apply(root.dataset.v3Theme || "light");
+
+      btn?.addEventListener("click", () => {
+        const next = body.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        localStorage.setItem("v3-theme", next);
+        apply(next);
+      });
+    </script>
+
+    <style is:global>
+      body.v3 {
+        --mono: "Space Mono", ui-monospace, monospace;
+        --bg: #ffffff;
+        --text: #000000;
+        --accent: #4338ca;
+        --rule: #eee;
+        --accent-line-strong: rgba(67, 56, 202, 0.1);
+        --accent-line-faint: rgba(67, 56, 202, 0.05);
+        --accent-tint: rgba(67, 56, 202, 0.05);
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: "Space Grotesk", sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+        margin: 0;
+        transition: background-color 200ms ease, color 200ms ease;
+      }
+
+      body.v3[data-theme="dark"] {
+        --bg: #0b0b10;
+        --text: #f5f5f7;
+        --accent: #8b80ff;
+        --rule: #1f1f28;
+        --accent-line-strong: rgba(139, 128, 255, 0.18);
+        --accent-line-faint: rgba(139, 128, 255, 0.08);
+        --accent-tint: rgba(139, 128, 255, 0.1);
+      }
+
+      .v3 .net-line--strong { stroke: var(--accent-line-strong); }
+      .v3 .net-line--faint { stroke: var(--accent-line-faint); }
+
+      .v3 .theme-toggle {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 9999;
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--rule);
+        border-radius: 999px;
+        cursor: pointer;
+        padding: 0;
+        transition: background-color 150ms ease, color 150ms ease,
+          border-color 150ms ease;
+      }
+      .v3 .theme-toggle:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .v3 .theme-toggle:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .v3 .theme-toggle .icon {
+        width: 20px;
+        height: 20px;
+      }
+      .v3 .theme-toggle .icon--sun { display: none; }
+      .v3 .theme-toggle .icon--moon { display: block; }
+      body.v3[data-theme="dark"] .theme-toggle .icon--sun { display: block; }
+      body.v3[data-theme="dark"] .theme-toggle .icon--moon { display: none; }
+
+      .v3 *,
+      .v3 *::before,
+      .v3 *::after {
+        box-sizing: border-box;
+      }
+
+      .v3 .network-lines {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .v3 main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 6rem 4rem 8rem;
+        position: relative;
+        z-index: 1;
+      }
+
+      .v3 .node-label {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        color: var(--accent);
+        margin-bottom: 1rem;
+        opacity: 0.6;
+      }
+
+      .v3 .network-tag {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        background: var(--accent);
+        color: white;
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        margin-bottom: 1rem;
+      }
+
+      .v3 .top-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        margin-bottom: 10rem;
+        align-items: end;
+      }
+
+      .v3 h1 {
+        font-size: clamp(4rem, 12vw, 8rem);
+        line-height: 0.85;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        margin: 0 0 2rem;
+      }
+
+      .v3 .tagline {
+        font-size: 1.1rem;
+        font-weight: 300;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        opacity: 0.6;
+        font-family: var(--mono);
+        margin: 0;
+      }
+
+      .v3 .bio p {
+        font-size: 1.5rem;
+        line-height: 1.5;
+        font-weight: 300;
+        border-left: 2px solid var(--accent);
+        padding-left: 2rem;
+        margin: 0;
+      }
+
+      .v3 .header-with-shape {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 4rem;
+      }
+
+      .v3 h2 {
+        font-size: 0.8rem;
+        letter-spacing: 0.4em;
+        font-weight: 700;
+        font-family: var(--mono);
+        margin: 0;
+      }
+
+      .v3 .mini-square {
+        width: 12px;
+        height: 12px;
+        background: var(--accent);
+      }
+      .v3 .mini-circle {
+        width: 12px;
+        height: 12px;
+        background: var(--text);
+        border-radius: 50%;
+      }
+      .v3 .mini-triangle {
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 14px solid var(--accent);
+      }
+
+      .v3 .experience {
+        margin-bottom: 8rem;
+      }
+
+      .v3 .exp-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 4rem;
+      }
+
+      .v3 .exp-card {
+        border-top: 1px solid var(--rule);
+        padding-top: 2rem;
+        position: relative;
+      }
+
+      .v3 .year {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--accent);
+        display: block;
+        margin-bottom: 1rem;
+        font-family: var(--mono);
+      }
+
+      .v3 .exp-card h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+      }
+
+      .v3 .proj-link {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 2px solid var(--accent);
+      }
+      .v3 .proj-link:hover {
+        color: var(--accent);
+      }
+
+      .v3 .company {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin: 0 0 1.5rem;
+        opacity: 0.5;
+        font-family: var(--mono);
+      }
+
+      .v3 .desc {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        font-weight: 300;
+        opacity: 0.8;
+        margin: 0;
+      }
+
+      .v3 .hl-list {
+        list-style: none;
+        padding: 0;
+        margin: 1.2rem 0 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+
+      .v3 .hl-list li {
+        font-size: 0.9rem;
+        line-height: 1.55;
+        font-weight: 300;
+        opacity: 0.75;
+        padding-left: 1.2rem;
+        position: relative;
+      }
+
+      .v3 .hl-list li::before {
+        content: ">";
+        position: absolute;
+        left: 0;
+        top: 0;
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        opacity: 0.7;
+      }
+
+      .v3 .contact--banner {
+        margin-bottom: 8rem;
+      }
+      .v3 .contact--banner .contact-links {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.5rem 2.5rem;
+      }
+
+      .v3 .edu-cert-split {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        gap: 4rem;
+        margin-bottom: 8rem;
+      }
+      .v3 .edu-cert-split > .experience {
+        margin-bottom: 0;
+      }
+      .v3 .edu-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+      }
+
+      .v3 .sub-tagline {
+        font-size: 1rem;
+        font-weight: 300;
+        line-height: 1.5;
+        opacity: 0.7;
+        margin: 1rem 0 0;
+        max-width: 32ch;
+      }
+
+      .v3 .skill-groups {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 3rem 4rem;
+      }
+      .v3 .skill-group__heading {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 0.8rem;
+        font-weight: 700;
+      }
+      .v3 .skill-group .skill-list {
+        gap: 0.6rem;
+      }
+      .v3 .skill-group .skill-item {
+        font-size: 0.95rem;
+      }
+
+      @media (max-width: 800px) {
+        .v3 .edu-cert-split {
+          grid-template-columns: 1fr;
+          gap: 4rem;
+        }
+      }
+
+      .v3 .skill-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+      }
+
+      .v3 .skill-item {
+        font-size: 1.1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .v3 .skill-item::before {
+        content: "0x";
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        color: var(--accent);
+        opacity: 0.5;
+      }
+
+      .v3 .contact-links {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .v3 .contact-links a {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text);
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        width: fit-content;
+        transition: all 0.2s;
+        font-family: var(--mono);
+        word-break: break-all;
+      }
+
+      .v3 .contact-links a:hover {
+        color: var(--accent);
+        background: var(--accent-tint);
+        padding-left: 1rem;
+      }
+
+      .v3 .contact--banner .contact-links a:hover {
+        padding-left: 0;
+        transform: translateX(0.5rem);
+      }
+
+      @media (max-width: 900px) {
+        .v3 .top-layout {
+          grid-template-columns: 1fr;
+          gap: 4rem;
+          margin-bottom: 6rem;
+        }
+        .v3 main {
+          padding: 4rem 2rem 6rem;
+        }
+      }
+
+    </style>
+  </body>
+</html>
