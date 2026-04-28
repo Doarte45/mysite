@@ -4,17 +4,14 @@ import "../styles/global.css";
 export interface Props {
   title: string;
   description?: string;
-  /** When true, set canonical to /v1 so duplicates don't hurt SEO. */
-  canonical?: boolean;
 }
 
-const { title, description, canonical = false } = Astro.props;
+const { title, description } = Astro.props;
 const resolvedDescription =
   description ??
-  "Andrés Duarte Ornelas — cybersecurity engineer. CV presented in three distinct visual interpretations.";
-const canonicalUrl = new URL("/v3", Astro.site ?? Astro.url.origin).toString();
+  "Andrés Duarte Ornelas — cybersecurity engineer.";
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).toString();
 const currentUrl = Astro.url.toString();
-const isCanonical = canonical || Astro.url.pathname === "/v3";
 ---
 
 <meta charset="utf-8" />
@@ -24,11 +21,6 @@ const isCanonical = canonical || Astro.url.pathname === "/v3";
 <meta name="description" content={resolvedDescription} />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="canonical" href={canonicalUrl} />
-{
-  !isCanonical && (
-    <meta name="robots" content="noindex, follow" />
-  )
-}
 
 <meta property="og:type" content="profile" />
 <meta property="og:title" content={title} />

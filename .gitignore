@@ -25,3 +25,4 @@ pnpm-debug.log*
 
 # extra
 export
+src/archive/
