@@ -1,0 +1,184 @@
+{
+  "name": "Andrés Duarte Ornelas",
+  "role": "Cybersecurity Professional",
+  "tagline": "Cybersecurity graduate professional specializing in network security architecture, vulnerability assessment, and the intersection of LLMs with offensive and defensive security.",
+  "location": "Monterrey, MX",
+  "contact": [
+    {
+      "label": "Email",
+      "value": "andresdornelas@gmail.com",
+      "href": "mailto:andresdornelas@gmail.com"
+    },
+    {
+      "label": "LinkedIn",
+      "value": "linkedin.com/in/andrés-d-950430240",
+      "href": "http://linkedin.com/in/andr%C3%A9s-d-950430240"
+    },
+    {
+      "label": "Location",
+      "value": "Monterrey, MX",
+      "href": "https://www.google.com/maps/search/Monterrey,+MX"
+    }
+  ],
+  "summary": "Cybersecurity professional with hands-on experience in network security architecture, vulnerability assessment, incident response, and digital forensics. Currently pursuing dual master's degrees in Information Technology (Cybersecurity) at UTSA and Cybersecurity at ITESM. Passionate about network security, incident detection and response, and the emerging role of large language models in autonomous network operations.",
+  "experience": [
+    {
+      "role": "Cybersecurity Trainee",
+      "company": "Dipole Digital",
+      "location": "Monterrey, MX & Hermosillo, MX (Hybrid)",
+      "period": "August 2024 – December 2024",
+      "summary": "Evaluated risks and implemented security solutions in production environments.",
+      "highlights": [
+        "Evaluated risks in production environments and developed tailored mitigation solutions",
+        "Designed and implemented segmented office network using VLANs with DMZ for internet-facing services",
+        "Configured traffic rules to control inter-segment communication and enhance network security",
+        "Performed web vulnerability scanning using Zed Attack Proxy (ZAP) to identify and remediate threats",
+        "Assisted in creating and implementing company-wide cybersecurity policy framework",
+        "Gained hands-on experience in security incident management and response"
+      ]
+    },
+    {
+      "role": "Cybersecurity Engineering Intern",
+      "company": "Dipole Digital",
+      "location": "Monterrey, MX (Remote)",
+      "period": "March 2024 – June 2024",
+      "summary": "Conducted vulnerability assessments and implemented system hardening strategies.",
+      "highlights": [
+        "Conducted comprehensive vulnerability assessments and implemented system hardening strategies",
+        "Documented security findings and provided actionable recommendations to enhance cybersecurity posture"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Empirical Characterization of a Commercial Coding Agent for CLI-Based OSPF Fault Diagnosis",
+      "year": "January 2026 – May 2026",
+      "description": "Conducted the first empirical evaluation of a general-purpose coding agent (Claude Code) performing autonomous OSPF fault diagnosis in a traditional, non-SDN CLI environment, addressing a gap in existing LLM network operations research. Designed a 50-session quantitative experiment using a three-router GNS3/VyOS topology modeled after CCNA 11.6.3, with six simultaneously active faults per session and automated pre/post verification via Netmiko snapshots. Achieved an effective fault resolution rate of ~97% and a perfect-run rate of ~78% at a mean cost of $0.81/session; zero sessions introduced a configuration regression. Publicly released experimental materials, router configurations, and analysis scripts at github.com/Doarte45/LLMnetopsLab.",
+      "stack": [
+        "Claude Code",
+        "GNS3",
+        "VyOS",
+        "Netmiko",
+        "Python"
+      ],
+      "url": "https://github.com/Doarte45/LLMnetopsLab"
+    },
+    {
+      "name": "Cloud as a Service Commercial and Operative Design",
+      "year": "August 2023 – October 2023",
+      "description": "Designed multi-cloud service architecture using AWS, Azure, and Google Cloud for company Quanti. Developed commercial strategy for service delivery and operational framework.",
+      "stack": [
+        "AWS",
+        "Azure",
+        "Google Cloud"
+      ]
+    },
+    {
+      "name": "Digital Forensic Investigation: \"Posthumous Digital Note\" Case Analysis",
+      "year": "August 2025",
+      "description": "Collaborated on comprehensive digital forensic analysis of suspicious death case using industry-standard tools. Analyzed disk images, RAM dumps, and Windows event logs to reconstruct timeline and establish evidence of third-party involvement. Documented complete chain of custody following ISO/IEC 27037 and NIST SP 800-86 standards.",
+      "stack": [
+        "Autopsy",
+        "Sleuth Kit",
+        "Volatility",
+        "Registry Explorer"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "heading": "Cybersecurity",
+      "items": [
+        "Network security architecture",
+        "Vulnerability assessment",
+        "Incident response",
+        "Security policy development",
+        "VLAN segmentation",
+        "DMZ configuration"
+      ]
+    },
+    {
+      "heading": "Security Tools",
+      "items": [
+        "Security Onion",
+        "ELK Stack",
+        "Zed Attack Proxy (ZAP)",
+        "Cisco Packet Tracer",
+        "Nessus (Basic)"
+      ]
+    },
+    {
+      "heading": "Forensic Tools",
+      "items": [
+        "Autopsy/Sleuth Kit",
+        "Volatility"
+      ]
+    },
+    {
+      "heading": "Networking Technologies",
+      "items": [
+        "Fortinet",
+        "TP-Link",
+        "Mikrotik",
+        "Cisco"
+      ]
+    },
+    {
+      "heading": "Programming & Scripting",
+      "items": [
+        "Python (Basic)",
+        "C (Basic)",
+        "MATLAB (Intermediate)"
+      ]
+    },
+    {
+      "heading": "Operating Systems",
+      "items": [
+        "Linux (Intermediate)",
+        "Windows"
+      ]
+    },
+    {
+      "heading": "Software & Tools",
+      "items": [
+        "MS Office (Intermediate)",
+        "Google Suite (Intermediate)"
+      ]
+    },
+    {
+      "heading": "Languages",
+      "items": [
+        "Spanish (Native)",
+        "English (Advanced)"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Master of Science in Information Technology, Cybersecurity Concentration",
+      "institution": "University of Texas at San Antonio (UTSA)",
+      "period": "Expected: May 2026",
+      "detail": "Currently enrolled in Spring 2026 semester taking UTSA electives. Part of UTSA-ITESM Dual Degree Program."
+    },
+    {
+      "degree": "Master's in Cybersecurity",
+      "institution": "Monterrey Institute of Technology (ITESM)",
+      "period": "Expected: December 2026",
+      "detail": ""
+    },
+    {
+      "degree": "Bachelor of Science in Electronics Engineering, Specialization in Cybersecurity",
+      "institution": "Monterrey Institute of Technology (ITESM)",
+      "period": "June 2024",
+      "detail": ""
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Cisco CyberOps Associate Certification",
+      "issuer": "Cisco Networking Academy",
+      "date": "November 2023",
+      "detail": "Demonstrated comprehensive understanding of Security Operations including intrusion detection, analysis, and network monitoring. Completed 52 hands-on labs (30+ hours) using Security Onion, ELK Stack, and Cisco Packet Tracer."
+    }
+  ]
+}
