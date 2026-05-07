@@ -17,6 +17,9 @@ pnpm-debug.log*
 .env
 .env.production
 
+# service account keys / secrets
+secrets/
+
 # macOS-specific files
 .DS_Store
 

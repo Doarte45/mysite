@@ -1,6 +1,8 @@
 ---
+import { Image } from "astro:assets";
 import BaseHead from "../layouts/BaseHead.astro";
 import { cv } from "../data/cv.ts";
+import mePhoto from "../assets/me.jpg";
 
 const nameParts = cv.name.split(" ");
 const firstName = nameParts[0];
@@ -59,6 +61,11 @@ const lastName = nameParts.slice(1).join(" ");
       </svg>
     </button>
 
+    <div class="scroll-hint" data-scroll-hint aria-hidden="true">
+      <span class="scroll-hint__label">STREAM</span>
+      <span class="scroll-hint__arrow">▼</span>
+    </div>
+
     <div class="network-lines" aria-hidden="true">
       <svg width="100%" height="100%">
         <line class="net-line net-line--strong" x1="10%" y1="10%" x2="90%" y2="90%" stroke-width="1" />
@@ -69,16 +76,39 @@ const lastName = nameParts.slice(1).join(" ");
 
     <main>
       <div class="top-layout">
+        <aside class="portrait" aria-label={`Portrait of ${cv.name}`}>
+          <div class="node-label">NODE_PORTRAIT: 10.0.0.1</div>
+          <div class="portrait-frame">
+            <span class="corner corner--tl" aria-hidden="true"></span>
+            <span class="corner corner--tr" aria-hidden="true"></span>
+            <span class="corner corner--bl" aria-hidden="true"></span>
+            <span class="corner corner--br" aria-hidden="true"></span>
+            <Image
+              src={mePhoto}
+              alt={`${cv.name} — portrait`}
+              widths={[240, 360, 480]}
+              sizes="(max-width: 900px) 60vw, 280px"
+            />
+          </div>
+        </aside>
+
         <header>
-          <div class="node-label">NODE_AUTH: 10.0.0.1</div>
+          <div class="node-label">NODE_AUTH: 10.0.0.2</div>
           <h1>{firstName}{lastName && (<><br />{lastName}</>)}</h1>
           <p class="tagline">{cv.role}</p>
-          <p class="sub-tagline">{cv.tagline}</p>
         </header>
 
         <section class="bio">
           <div class="network-tag">PACKET_INSPECTION</div>
           <p>{cv.summary}</p>
+          <div class="dossier-bar">
+            <a href="/resume.pdf" target="_blank" rel="noopener" class="dossier-btn">
+              <span class="dossier-btn__bracket">[</span>
+              <span class="dossier-btn__label">VIEW_FULL_DOSSIER.PDF</span>
+              <span class="dossier-btn__arrow">→</span>
+              <span class="dossier-btn__bracket">]</span>
+            </a>
+          </div>
         </section>
       </div>
 
@@ -223,6 +253,15 @@ const lastName = nameParts.slice(1).join(" ");
         localStorage.setItem("v3-theme", next);
         apply(next);
       });
+
+      const scrollHint = document.querySelector<HTMLElement>("[data-scroll-hint]");
+      if (scrollHint) {
+        const onScroll = () => {
+          scrollHint.classList.toggle("is-hidden", window.scrollY > 200);
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        onScroll();
+      }
     </script>
 
     <style is:global>
@@ -300,6 +339,46 @@ const lastName = nameParts.slice(1).join(" ");
         box-sizing: border-box;
       }
 
+      .v3 .scroll-hint {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.9rem;
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        letter-spacing: 0.4em;
+        color: var(--accent);
+        background: var(--bg);
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        backdrop-filter: blur(6px);
+        opacity: 0.9;
+        pointer-events: none;
+        transition: opacity 250ms ease, transform 250ms ease;
+        animation: scroll-hint-bob 1.8s ease-in-out infinite;
+      }
+      .v3 .scroll-hint.is-hidden {
+        opacity: 0;
+        animation: none;
+        transform: translate(-50%, 0.5rem);
+      }
+      .v3 .scroll-hint__arrow {
+        font-size: 0.8rem;
+        line-height: 1;
+      }
+      @keyframes scroll-hint-bob {
+        0%, 100% { transform: translate(-50%, 0); }
+        50%      { transform: translate(-50%, 4px); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .v3 .scroll-hint { animation: none; }
+      }
+
       .v3 .network-lines {
         position: fixed;
         top: 0;
@@ -338,18 +417,49 @@ const lastName = nameParts.slice(1).join(" ");
 
       .v3 .top-layout {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4rem;
-        margin-bottom: 10rem;
-        align-items: end;
+        grid-template-columns: 200px minmax(0, 1.2fr) minmax(0, 1.5fr);
+        gap: 3rem;
+        margin-bottom: 8rem;
+        align-items: start;
       }
 
+      .v3 .portrait {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .v3 .portrait-frame {
+        position: relative;
+        border: 1px solid var(--accent);
+        padding: 6px;
+        background: var(--accent-tint);
+        aspect-ratio: 4 / 5;
+        width: 100%;
+      }
+      .v3 .portrait-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .v3 .corner {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border: 2px solid var(--accent);
+      }
+      .v3 .corner--tl { top: -2px; left: -2px;  border-right: 0; border-bottom: 0; }
+      .v3 .corner--tr { top: -2px; right: -2px; border-left: 0;  border-bottom: 0; }
+      .v3 .corner--bl { bottom: -2px; left: -2px;  border-right: 0; border-top: 0; }
+      .v3 .corner--br { bottom: -2px; right: -2px; border-left: 0;  border-top: 0; }
+
       .v3 h1 {
-        font-size: clamp(4rem, 12vw, 8rem);
-        line-height: 0.85;
+        font-size: clamp(2.75rem, 6vw, 5rem);
+        line-height: 0.9;
         font-weight: 700;
         letter-spacing: -0.04em;
         margin: 0 0 2rem;
+        overflow-wrap: break-word;
       }
 
       .v3 .tagline {
@@ -363,11 +473,11 @@ const lastName = nameParts.slice(1).join(" ");
       }
 
       .v3 .bio p {
-        font-size: 1.5rem;
-        line-height: 1.5;
+        font-size: 1.15rem;
+        line-height: 1.55;
         font-weight: 300;
         border-left: 2px solid var(--accent);
-        padding-left: 2rem;
+        padding-left: 1.5rem;
         margin: 0;
       }
 
@@ -439,10 +549,12 @@ const lastName = nameParts.slice(1).join(" ");
       .v3 .proj-link {
         color: inherit;
         text-decoration: none;
-        border-bottom: 2px solid var(--accent);
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.15s ease, color 0.15s ease;
       }
       .v3 .proj-link:hover {
         color: var(--accent);
+        border-bottom-color: var(--accent);
       }
 
       .v3 .company {
@@ -489,6 +601,43 @@ const lastName = nameParts.slice(1).join(" ");
         font-family: var(--mono);
         font-size: 0.8rem;
         opacity: 0.7;
+      }
+
+      .v3 .dossier-bar {
+        display: flex;
+        justify-content: flex-start;
+        margin-top: 1.75rem;
+      }
+      .v3 .dossier-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.65rem 1.1rem;
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        text-decoration: none;
+        border: 1px solid var(--accent);
+        background: transparent;
+        transition: background-color 0.15s ease, color 0.15s ease,
+          transform 0.15s ease;
+      }
+      .v3 .dossier-btn__bracket {
+        opacity: 0.6;
+      }
+      .v3 .dossier-btn__arrow {
+        transition: transform 0.15s ease;
+      }
+      .v3 .dossier-btn:hover {
+        background: var(--accent);
+        color: var(--bg, #0b0b0e);
+      }
+      .v3 .dossier-btn:hover .dossier-btn__bracket {
+        opacity: 1;
+      }
+      .v3 .dossier-btn:hover .dossier-btn__arrow {
+        transform: translateX(3px);
       }
 
       .v3 .contact--banner {
@@ -608,6 +757,9 @@ const lastName = nameParts.slice(1).join(" ");
           grid-template-columns: 1fr;
           gap: 4rem;
           margin-bottom: 6rem;
+        }
+        .v3 .portrait {
+          max-width: 240px;
         }
         .v3 main {
           padding: 4rem 2rem 6rem;
