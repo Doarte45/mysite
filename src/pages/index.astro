@@ -102,7 +102,7 @@ const lastName = nameParts.slice(1).join(" ");
           <div class="network-tag">PACKET_INSPECTION</div>
           <p>{cv.summary}</p>
           <div class="dossier-bar">
-            <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/resume.pdf`} target="_blank" rel="noopener" class="dossier-btn">
+            <a href={`${import.meta.env.BASE_URL}/resume.pdf`.replace(/\/+/g, "/")} target="_blank" rel="noopener" class="dossier-btn">
               <span class="dossier-btn__bracket">[</span>
               <span class="dossier-btn__label">VIEW_FULL_DOSSIER.PDF</span>
               <span class="dossier-btn__arrow">→</span>
