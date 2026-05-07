@@ -12,7 +12,7 @@ const lastName = nameParts.slice(1).join(" ");
 <html lang="en">
   <head>
     <BaseHead
-      title={`${cv.name} — Topology`}
+      title={`${cv.name} — Cybersecurity Engineer`}
       description={`${cv.name}, ${cv.role}. ${cv.tagline}`}
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -86,8 +86,10 @@ const lastName = nameParts.slice(1).join(" ");
             <Image
               src={mePhoto}
               alt={`${cv.name} — portrait`}
-              widths={[240, 360, 480]}
-              sizes="(max-width: 900px) 60vw, 280px"
+              widths={[240, 360, 480, 720, 960]}
+              sizes="(max-width: 900px) 240px, 360px"
+              width={960}
+              loading="lazy"
             />
           </div>
         </aside>

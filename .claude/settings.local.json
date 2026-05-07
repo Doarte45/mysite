@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:doarte45.github.io)"
+    ]
+  }
+}
