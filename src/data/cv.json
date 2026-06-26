@@ -1,7 +1,7 @@
 {
   "name": "Andrés Duarte Ornelas",
   "role": "Cybersecurity Professional",
-  "tagline": "Cybersecurity graduate professional specializing in network security architecture, vulnerability assessment, and the intersection of LLMs with offensive and defensive security.",
+  "tagline": "Cybersecurity graduate student and practitioner specializing in network security architecture, vulnerability assessment, and incident response.",
   "location": "Monterrey, MX",
   "contact": [
     {
@@ -20,14 +20,14 @@
       "href": "https://www.google.com/maps/search/Monterrey,+MX"
     }
   ],
-  "summary": "Cybersecurity professional with hands-on experience in network security architecture, vulnerability assessment, incident response, and digital forensics. Currently pursuing dual master's degrees in Information Technology (Cybersecurity) at UTSA and Cybersecurity at ITESM. Passionate about network security, incident detection and response, and the emerging role of large language models in autonomous network operations.",
+  "summary": "Cybersecurity graduate student enrolled in the UTSA–ITESM Dual Degree Program, with hands-on professional experience in network security architecture, vulnerability assessment, and incident response. Passionate about network security, incident detection and response, and the intersection of large language models with cybersecurity.",
   "experience": [
     {
       "role": "Cybersecurity Trainee",
       "company": "Dipole Digital",
       "location": "Monterrey, MX & Hermosillo, MX (Hybrid)",
       "period": "August 2024 – December 2024",
-      "summary": "Evaluated risks and implemented security solutions in production environments.",
+      "summary": "Evaluated risks in production environments and contributed to network security design and policy development.",
       "highlights": [
         "Evaluated risks in production environments and developed tailored mitigation solutions",
         "Designed and implemented segmented office network using VLANs with DMZ for internet-facing services",
@@ -42,7 +42,7 @@
       "company": "Dipole Digital",
       "location": "Monterrey, MX (Remote)",
       "period": "March 2024 – June 2024",
-      "summary": "Conducted vulnerability assessments and implemented system hardening strategies.",
+      "summary": "Conducted vulnerability assessments and documented security findings to enhance cybersecurity posture.",
       "highlights": [
         "Conducted comprehensive vulnerability assessments and implemented system hardening strategies",
         "Documented security findings and provided actionable recommendations to enhance cybersecurity posture"
@@ -55,11 +55,11 @@
       "year": "January 2026 – May 2026",
       "description": "Conducted the first empirical evaluation of a general-purpose coding agent (Claude Code) performing autonomous OSPF fault diagnosis in a traditional, non-SDN CLI environment, addressing a gap in existing LLM network operations research. Designed a 50-session quantitative experiment using a three-router GNS3/VyOS topology modeled after CCNA 11.6.3, with six simultaneously active faults per session and automated pre/post verification via Netmiko snapshots. Achieved an effective fault resolution rate of ~97% and a perfect-run rate of ~78% at a mean cost of $0.81/session; zero sessions introduced a configuration regression. Publicly released experimental materials, router configurations, and analysis scripts at github.com/Doarte45/LLMnetopsLab.",
       "stack": [
-        "Claude Code",
         "GNS3",
         "VyOS",
         "Netmiko",
-        "Python"
+        "Python",
+        "Claude Code"
       ],
       "url": "https://github.com/Doarte45/LLMnetopsLab"
     },
@@ -76,7 +76,7 @@
     {
       "name": "Digital Forensic Investigation: \"Posthumous Digital Note\" Case Analysis",
       "year": "August 2025",
-      "description": "Collaborated on comprehensive digital forensic analysis of suspicious death case using industry-standard tools. Analyzed disk images, RAM dumps, and Windows event logs to reconstruct timeline and establish evidence of third-party involvement. Documented complete chain of custody following ISO/IEC 27037 and NIST SP 800-86 standards.",
+      "description": "Collaborated on comprehensive digital forensic analysis of suspicious death case using industry-standard tools (Autopsy/Sleuth Kit, Volatility, Registry Explorer). Analyzed disk images, RAM dumps, and Windows event logs to reconstruct timeline and establish evidence of third-party involvement. Documented complete chain of custody following ISO/IEC 27037 and NIST SP 800-86 standards.",
       "stack": [
         "Autopsy",
         "Sleuth Kit",
@@ -120,7 +120,9 @@
         "Fortinet",
         "TP-Link",
         "Mikrotik",
-        "Cisco"
+        "Cisco",
+        "VyOS",
+        "GNS3"
       ]
     },
     {
@@ -142,7 +144,8 @@
       "heading": "Software & Tools",
       "items": [
         "MS Office (Intermediate)",
-        "Google Suite (Intermediate)"
+        "Google Suite (Intermediate)",
+        "Git"
       ]
     },
     {
