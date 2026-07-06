@@ -17,6 +17,7 @@ export interface Project {
   readonly name: string;
   readonly year: string;
   readonly description: string;
+  readonly highlights?: readonly string[];
   readonly stack: readonly string[];
   readonly url?: string;
 }
@@ -33,6 +34,8 @@ export interface Certification {
   readonly issuer: string;
   readonly date: string;
   readonly detail?: string;
+  readonly badgeId?: string; // Credly badge id; used to link to the verification page
+  readonly badgeImage?: string; // Credly badge image URL; renders the badge graphic when present
 }
 
 export interface SkillGroup {

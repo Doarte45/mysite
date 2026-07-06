@@ -61,6 +61,7 @@ const CV_TOOL_SCHEMA = {
           name: { type: "string" },
           year: { type: "string" },
           description: { type: "string" },
+          highlights: { type: "array", items: { type: "string" } },
           stack: { type: "array", items: { type: "string" } },
           url: { type: "string" },
         },
@@ -120,9 +121,12 @@ Rules:
 - "tagline" is a one-sentence professional headline. If not explicitly present, derive a concise one from the summary.
 - "highlights" are bullet points under each role. Split paragraphs into separate bullets if appropriate.
 - "stack" lists tools/technologies used in a project. Extract from inline mentions if no explicit list exists.
+- For projects with multi-sentence descriptions (or explicit bullet points in the source), keep "description" to a single overview sentence and put the remaining details as separate "highlights" bullets. Omit "highlights" for short one/two-sentence projects.
 - "skills" are grouped by heading. Preserve the user's groupings if present.
 - For dates, preserve the format used in the source (e.g., "August 2024 — December 2024", "Expected May 2026").
-- Email href should be "mailto:<email>"; LinkedIn href should be a full URL; Location href should be a Google Maps query URL.`;
+- Email href should be "mailto:<email>"; LinkedIn href should be a full URL; Location href should be a Google Maps query URL.
+- All URLs (href, project url) must be absolute, including the "https://" scheme.
+- Use standard capitalization for "name" and other fields even if the source renders them in ALL CAPS for styling (e.g. "Andrés Duarte Ornelas", not "ANDRÉS DUARTE ORNELAS").`;
 
 async function downloadDoc() {
   const auth = new google.auth.GoogleAuth({
@@ -163,7 +167,7 @@ async function parseWithClaude(markdown) {
   const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-sonnet-5",
     max_tokens: 8192,
     system: [
       {
@@ -200,6 +204,28 @@ async function parseWithClaude(markdown) {
   return toolUse.input;
 }
 
+// Badge fields (badgeId/badgeImage) are site-local enrichment that doesn't
+// exist in the Google Doc — carry them over from the previous cv.json so a
+// sync doesn't wipe them.
+async function mergeBadgeFields(cv) {
+  let existing;
+  try {
+    existing = JSON.parse(await readFile(CV_JSON_PATH, "utf8"));
+  } catch {
+    return cv;
+  }
+  const byName = new Map(
+    (existing.certifications ?? []).map((c) => [c.name, c]),
+  );
+  for (const cert of cv.certifications ?? []) {
+    const prev = byName.get(cert.name);
+    if (!prev) continue;
+    if (prev.badgeId && cert.badgeId === undefined) cert.badgeId = prev.badgeId;
+    if (prev.badgeImage && cert.badgeImage === undefined) cert.badgeImage = prev.badgeImage;
+  }
+  return cv;
+}
+
 function validate(cv) {
   const required = [
     "name", "role", "tagline", "location", "contact", "summary",
@@ -214,7 +240,7 @@ function validate(cv) {
 async function main() {
   const { docxBuffer, pdfBuffer } = await downloadDoc();
   const markdown = await docxToMarkdown(docxBuffer);
-  const cv = await parseWithClaude(markdown);
+  const cv = await mergeBadgeFields(await parseWithClaude(markdown));
   validate(cv);
 
   await mkdir(dirname(CV_JSON_PATH), { recursive: true });
