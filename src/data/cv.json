@@ -1,13 +1,13 @@
 {
   "name": "Andrés Duarte Ornelas",
-  "role": "Cybersecurity Professional",
-  "tagline": "Cybersecurity graduate student and practitioner specializing in network security architecture, vulnerability assessment, and incident response.",
+  "role": "Cybersecurity Engineer",
+  "tagline": "Cybersecurity graduate student and engineer specializing in network security architecture, incident response, and the intersection of LLMs with cybersecurity",
   "location": "Monterrey, MX",
   "contact": [
     {
-      "label": "Email",
-      "value": "andresdornelas@gmail.com",
-      "href": "mailto:andresdornelas@gmail.com"
+      "label": "Location",
+      "value": "Monterrey, MX",
+      "href": "https://www.google.com/maps/search/?api=1&query=Monterrey%2C+MX"
     },
     {
       "label": "LinkedIn",
@@ -15,19 +15,19 @@
       "href": "http://linkedin.com/in/andr%C3%A9s-d-950430240"
     },
     {
-      "label": "Location",
-      "value": "Monterrey, MX",
-      "href": "https://www.google.com/maps/search/Monterrey,+MX"
+      "label": "Email",
+      "value": "andresdornelas@gmail.com",
+      "href": "mailto:andresdornelas@gmail.com"
     }
   ],
-  "summary": "Cybersecurity graduate student enrolled in the UTSA–ITESM Dual Degree Program, with hands-on professional experience in network security architecture, vulnerability assessment, and incident response. Passionate about network security, incident detection and response, and the intersection of large language models with cybersecurity.",
+  "summary": "Cybersecurity graduate student pursuing a dual Master's in Cybersecurity between UTSA and Tecnológico de Monterrey, with hands-on experience in network security architecture, vulnerability assessment, incident response, and digital forensics. Experienced in designing segmented network architectures, conducting vulnerability assessments, and researching the application of LLMs in autonomous network operations.",
   "experience": [
     {
       "role": "Cybersecurity Trainee",
       "company": "Dipole Digital",
       "location": "Monterrey, MX & Hermosillo, MX (Hybrid)",
       "period": "August 2024 – December 2024",
-      "summary": "Evaluated risks in production environments and contributed to network security design and policy development.",
+      "summary": "",
       "highlights": [
         "Evaluated risks in production environments and developed tailored mitigation solutions",
         "Designed and implemented segmented office network using VLANs with DMZ for internet-facing services",
@@ -42,7 +42,7 @@
       "company": "Dipole Digital",
       "location": "Monterrey, MX (Remote)",
       "period": "March 2024 – June 2024",
-      "summary": "Conducted vulnerability assessments and documented security findings to enhance cybersecurity posture.",
+      "summary": "",
       "highlights": [
         "Conducted comprehensive vulnerability assessments and implemented system hardening strategies",
         "Documented security findings and provided actionable recommendations to enhance cybersecurity posture"
@@ -53,13 +53,17 @@
     {
       "name": "Empirical Characterization of a Commercial Coding Agent for CLI-Based OSPF Fault Diagnosis",
       "year": "January 2026 – May 2026",
-      "description": "Conducted the first empirical evaluation of a general-purpose coding agent (Claude Code) performing autonomous OSPF fault diagnosis in a traditional, non-SDN CLI environment, addressing a gap in existing LLM network operations research. Designed a 50-session quantitative experiment using a three-router GNS3/VyOS topology modeled after CCNA 11.6.3, with six simultaneously active faults per session and automated pre/post verification via Netmiko snapshots. Achieved an effective fault resolution rate of ~97% and a perfect-run rate of ~78% at a mean cost of $0.81/session; zero sessions introduced a configuration regression. Publicly released experimental materials, router configurations, and analysis scripts at github.com/Doarte45/LLMnetopsLab.",
+      "description": "Conducted the first empirical evaluation of a general-purpose coding agent (Claude Code) performing autonomous OSPF fault diagnosis in a traditional, non-SDN CLI environment, addressing a gap in existing LLM network operations research.",
+      "highlights": [
+        "Designed a 50-session quantitative experiment using a three-router GNS3/VyOS topology modeled after CCNA 11.6.3, with six simultaneously active faults per session and automated pre/post verification via Netmiko snapshots",
+        "Achieved an effective fault resolution rate of ~97% and a perfect-run rate of ~78% at a mean cost of $0.81/session; zero sessions introduced a configuration regression",
+        "Publicly released experimental materials, router configurations, and analysis scripts at github.com/Doarte45/LLMnetopsLab"
+      ],
       "stack": [
+        "Claude Code",
         "GNS3",
         "VyOS",
-        "Netmiko",
-        "Python",
-        "Claude Code"
+        "Netmiko"
       ],
       "url": "https://github.com/Doarte45/LLMnetopsLab"
     },
@@ -78,8 +82,7 @@
       "year": "August 2025",
       "description": "Collaborated on comprehensive digital forensic analysis of suspicious death case using industry-standard tools (Autopsy/Sleuth Kit, Volatility, Registry Explorer). Analyzed disk images, RAM dumps, and Windows event logs to reconstruct timeline and establish evidence of third-party involvement. Documented complete chain of custody following ISO/IEC 27037 and NIST SP 800-86 standards.",
       "stack": [
-        "Autopsy",
-        "Sleuth Kit",
+        "Autopsy/Sleuth Kit",
         "Volatility",
         "Registry Explorer"
       ]
@@ -160,20 +163,20 @@
     {
       "degree": "Master of Science in Information Technology, Cybersecurity Concentration",
       "institution": "University of Texas at San Antonio (UTSA)",
-      "period": "Expected: May 2026",
-      "detail": "Currently enrolled in Spring 2026 semester taking UTSA electives. Part of UTSA-ITESM Dual Degree Program."
+      "period": "May 2026",
+      "detail": "San Antonio, TX. U.S. residency year (2025–2026) of the dual UTSA–Tecnológico de Monterrey Master's in Cybersecurity. Coursework: Security Risk Analysis, Strategic Management of IT, Data Mining, Cyber Warfare, plus jointly-advised Independent Study research paper"
     },
     {
       "degree": "Master's in Cybersecurity",
       "institution": "Monterrey Institute of Technology (ITESM)",
       "period": "Expected: December 2026",
-      "detail": ""
+      "detail": "Monterrey, MX"
     },
     {
       "degree": "Bachelor of Science in Electronics Engineering, Specialization in Cybersecurity",
       "institution": "Monterrey Institute of Technology (ITESM)",
       "period": "June 2024",
-      "detail": ""
+      "detail": "Monterrey, MX"
     }
   ],
   "certifications": [
@@ -181,7 +184,15 @@
       "name": "Cisco CyberOps Associate Certification",
       "issuer": "Cisco Networking Academy",
       "date": "November 2023",
-      "detail": "Demonstrated comprehensive understanding of Security Operations including intrusion detection, analysis, and network monitoring. Completed 52 hands-on labs (30+ hours) using Security Onion, ELK Stack, and Cisco Packet Tracer."
+      "detail": "Demonstrated comprehensive understanding of Security Operations including intrusion detection, analysis, and network monitoring. Completed 52 hands-on labs (30+ hours) using Security Onion, ELK Stack, and Cisco Packet Tracer"
+    },
+    {
+      "name": "AWS Certified AI Practitioner",
+      "issuer": "Amazon Web Services (AWS)",
+      "date": "July 2026",
+      "detail": "Validated foundational knowledge of AI, ML, and generative AI concepts, including model types, use case selection, and responsible AI practices. Demonstrated proficiency with AWS AI/ML services (Amazon Bedrock, SageMaker, Amazon Q) and prompt engineering techniques for foundation models",
+      "badgeId": "4b1a8158-6e26-460f-9842-ac1a5b416002",
+      "badgeImage": "https://images.credly.com/images/4d4693bb-530e-4bca-9327-de07f3aa2348/image.png"
     }
   ]
 }

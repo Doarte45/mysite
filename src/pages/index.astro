@@ -7,6 +7,27 @@ import mePhoto from "../assets/me.jpg";
 const nameParts = cv.name.split(" ");
 const firstName = nameParts[0];
 const lastName = nameParts.slice(1).join(" ");
+
+const siteUrl = new URL(
+  import.meta.env.BASE_URL,
+  Astro.site ?? Astro.url.origin,
+).toString();
+const email = cv.contact.find((c) => c.href.startsWith("mailto:"))?.value;
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: cv.name,
+  jobTitle: cv.role,
+  url: siteUrl,
+  ...(email && { email: `mailto:${email}` }),
+  sameAs: cv.contact
+    .filter((c) => c.href.startsWith("http") && c.label !== "Location")
+    .map((c) => c.href),
+  alumniOf: cv.education.map((e) => ({
+    "@type": "EducationalOrganization",
+    name: e.institution,
+  })),
+};
 ---
 
 <html lang="en">
@@ -21,6 +42,10 @@ const lastName = nameParts.slice(1).join(" ");
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(personLd)}
+    />
     <script is:inline>
       (function () {
         try {
@@ -33,6 +58,7 @@ const lastName = nameParts.slice(1).join(" ");
     </script>
   </head>
   <body class="v3">
+    <a class="skip-link" href="#main">Skip to content</a>
     <button
       class="theme-toggle"
       type="button"
@@ -74,7 +100,7 @@ const lastName = nameParts.slice(1).join(" ");
       </svg>
     </div>
 
-    <main>
+    <main id="main">
       <div class="top-layout">
         <aside class="portrait" aria-label={`Portrait of ${cv.name}`}>
           <div class="node-label">NODE_PORTRAIT: 10.0.0.1</div>
@@ -89,7 +115,8 @@ const lastName = nameParts.slice(1).join(" ");
               widths={[240, 360, 480, 720, 960]}
               sizes="(max-width: 900px) 240px, 360px"
               width={960}
-              loading="lazy"
+              loading="eager"
+              fetchpriority="high"
             />
           </div>
         </aside>
@@ -143,7 +170,7 @@ const lastName = nameParts.slice(1).join(" ");
                   <p class="company">
                     {exp.company} — {exp.location}
                   </p>
-                  <p class="desc">{exp.summary}</p>
+                  {exp.summary && <p class="desc">{exp.summary}</p>}
                   <ul class="hl-list">
                     {exp.highlights.map((h) => (
                       <li>{h}</li>
@@ -165,9 +192,16 @@ const lastName = nameParts.slice(1).join(" ");
               cv.projects.map((p) => (
                 <div class="exp-card">
                   <span class="year">REF: {p.year}</span>
-                  <h3>{p.url ? <a class="proj-link" href={p.url}>{p.name}</a> : p.name}</h3>
+                  <h3>{p.url ? <a class="proj-link" href={p.url.startsWith("http") ? p.url : `https://${p.url}`}>{p.name}</a> : p.name}</h3>
                   <p class="company">{p.stack.join(" / ")}</p>
                   <p class="desc">{p.description}</p>
+                  {p.highlights && (
+                    <ul class="hl-list">
+                      {p.highlights.map((h) => (
+                        <li>{h}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               ))
             }
@@ -207,6 +241,34 @@ const lastName = nameParts.slice(1).join(" ");
                     <h3>{c.name}</h3>
                     <p class="company">{c.issuer}</p>
                     {c.detail && <p class="desc">{c.detail}</p>}
+                    {c.badgeImage && (
+                      c.badgeId ? (
+                        <a
+                          class="credly-badge"
+                          href={`https://www.credly.com/badges/${c.badgeId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            src={c.badgeImage}
+                            alt={`${c.name} verified digital badge`}
+                            width="150"
+                            height="150"
+                            loading="lazy"
+                          />
+                        </a>
+                      ) : (
+                        <span class="credly-badge">
+                          <img
+                            src={c.badgeImage}
+                            alt={`${c.name} digital badge`}
+                            width="150"
+                            height="150"
+                            loading="lazy"
+                          />
+                        </span>
+                      )
+                    )}
                   </div>
                 ))
               }
@@ -243,15 +305,15 @@ const lastName = nameParts.slice(1).join(" ");
       const btn = document.querySelector("[data-theme-toggle]");
 
       function apply(theme: string) {
-        body.setAttribute("data-theme", theme);
         root.dataset.v3Theme = theme;
+        body.setAttribute("data-theme", theme);
         btn?.setAttribute("aria-pressed", String(theme === "dark"));
       }
 
       apply(root.dataset.v3Theme || "light");
 
       btn?.addEventListener("click", () => {
-        const next = body.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        const next = root.dataset.v3Theme === "dark" ? "light" : "dark";
         localStorage.setItem("v3-theme", next);
         apply(next);
       });
@@ -286,7 +348,7 @@ const lastName = nameParts.slice(1).join(" ");
         transition: background-color 200ms ease, color 200ms ease;
       }
 
-      body.v3[data-theme="dark"] {
+      html[data-v3-theme="dark"] body.v3 {
         --bg: #0b0b10;
         --text: #f5f5f7;
         --accent: #8b80ff;
@@ -298,6 +360,30 @@ const lastName = nameParts.slice(1).join(" ");
 
       .v3 .net-line--strong { stroke: var(--accent-line-strong); }
       .v3 .net-line--faint { stroke: var(--accent-line-faint); }
+
+      .v3 .skip-link {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 10000;
+        padding: 0.6rem 1rem;
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        color: var(--accent);
+        background: var(--bg);
+        border: 1px solid var(--accent);
+        text-decoration: none;
+        transform: translateY(calc(-100% - 20px));
+        transition: transform 150ms ease;
+      }
+      .v3 .skip-link:focus-visible {
+        transform: translateY(0);
+      }
+
+      .v3 a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
 
       .v3 .theme-toggle {
         position: fixed;
@@ -332,8 +418,8 @@ const lastName = nameParts.slice(1).join(" ");
       }
       .v3 .theme-toggle .icon--sun { display: none; }
       .v3 .theme-toggle .icon--moon { display: block; }
-      body.v3[data-theme="dark"] .theme-toggle .icon--sun { display: block; }
-      body.v3[data-theme="dark"] .theme-toggle .icon--moon { display: none; }
+      html[data-v3-theme="dark"] body.v3 .theme-toggle .icon--sun { display: block; }
+      html[data-v3-theme="dark"] body.v3 .theme-toggle .icon--moon { display: none; }
 
       .v3 *,
       .v3 *::before,
@@ -404,7 +490,7 @@ const lastName = nameParts.slice(1).join(" ");
         font-size: 0.7rem;
         color: var(--accent);
         margin-bottom: 1rem;
-        opacity: 0.6;
+        opacity: 0.75;
       }
 
       .v3 .network-tag {
@@ -564,7 +650,7 @@ const lastName = nameParts.slice(1).join(" ");
         font-weight: 700;
         text-transform: uppercase;
         margin: 0 0 1.5rem;
-        opacity: 0.5;
+        opacity: 0.65;
         font-family: var(--mono);
       }
 
@@ -574,6 +660,17 @@ const lastName = nameParts.slice(1).join(" ");
         font-weight: 300;
         opacity: 0.8;
         margin: 0;
+      }
+
+      .v3 .credly-badge {
+        display: inline-block;
+        margin-top: 1.5rem;
+      }
+
+      .v3 .credly-badge img {
+        display: block;
+        width: 150px;
+        height: auto;
       }
 
       .v3 .hl-list {
