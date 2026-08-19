@@ -1,13 +1,13 @@
 {
   "name": "Andrés Duarte Ornelas",
-  "role": "Cybersecurity Engineer",
-  "tagline": "Cybersecurity graduate student and engineer specializing in network security architecture, incident response, and the intersection of LLMs with cybersecurity",
-  "location": "Monterrey, MX",
+  "role": "Cybersecurity Professional",
+  "tagline": "Cybersecurity professional with hands-on experience in network security architecture, vulnerability assessment, and incident response",
+  "location": "Chihuahua, MX (Open to relocation - Monterrey)",
   "contact": [
     {
       "label": "Location",
-      "value": "Monterrey, MX",
-      "href": "https://www.google.com/maps/search/?api=1&query=Monterrey%2C+MX"
+      "value": "Chihuahua, MX",
+      "href": "https://www.google.com/maps/search/?api=1&query=Chihuahua,+MX"
     },
     {
       "label": "LinkedIn",
@@ -20,7 +20,7 @@
       "href": "mailto:andresdornelas@gmail.com"
     }
   ],
-  "summary": "Cybersecurity graduate student pursuing a dual Master's in Cybersecurity between UTSA and Tecnológico de Monterrey, with hands-on experience in network security architecture, vulnerability assessment, incident response, and digital forensics. Experienced in designing segmented network architectures, conducting vulnerability assessments, and researching the application of LLMs in autonomous network operations.",
+  "summary": "Cybersecurity professional fully available for full-time roles. Completed UTSA in-person residency May 2026; currently finishing Tecnológico de Monterrey's cybersecurity master's program part-time/online (expected Dec 2026), which does not require full-time student status. Background in network security architecture, vulnerability assessment, and incident response, with hands-on experience in network simulation and fault diagnosis. Seeking SOC Analyst, Network Security, or IT Support roles.",
   "experience": [
     {
       "role": "Cybersecurity Trainee",
@@ -53,8 +53,8 @@
     {
       "name": "Empirical Characterization of a Commercial Coding Agent for CLI-Based OSPF Fault Diagnosis",
       "year": "January 2026 – May 2026",
-      "description": "Conducted the first empirical evaluation of a general-purpose coding agent (Claude Code) performing autonomous OSPF fault diagnosis in a traditional, non-SDN CLI environment, addressing a gap in existing LLM network operations research.",
       "highlights": [
+        "Conducted the first empirical evaluation of a general-purpose coding agent (Claude Code) performing autonomous OSPF fault diagnosis in a traditional, non-SDN CLI environment, addressing a gap in existing LLM network operations research.",
         "Designed a 50-session quantitative experiment using a three-router GNS3/VyOS topology modeled after CCNA 11.6.3, with six simultaneously active faults per session and automated pre/post verification via Netmiko snapshots",
         "Achieved an effective fault resolution rate of ~97% and a perfect-run rate of ~78% at a mean cost of $0.81/session; zero sessions introduced a configuration regression",
         "Publicly released experimental materials, router configurations, and analysis scripts at github.com/Doarte45/LLMnetopsLab"
@@ -70,7 +70,10 @@
     {
       "name": "Cloud as a Service Commercial and Operative Design",
       "year": "August 2023 – October 2023",
-      "description": "Designed multi-cloud service architecture using AWS, Azure, and Google Cloud for company Quanti. Developed commercial strategy for service delivery and operational framework.",
+      "highlights": [
+        "Designed multi-cloud service architecture using AWS, Azure, and Google Cloud for company Quanti.",
+        "Developed commercial strategy for service delivery and operational framework"
+      ],
       "stack": [
         "AWS",
         "Azure",
@@ -80,7 +83,11 @@
     {
       "name": "Digital Forensic Investigation: \"Posthumous Digital Note\" Case Analysis",
       "year": "August 2025",
-      "description": "Collaborated on comprehensive digital forensic analysis of suspicious death case using industry-standard tools (Autopsy/Sleuth Kit, Volatility, Registry Explorer). Analyzed disk images, RAM dumps, and Windows event logs to reconstruct timeline and establish evidence of third-party involvement. Documented complete chain of custody following ISO/IEC 27037 and NIST SP 800-86 standards.",
+      "highlights": [
+        "Collaborated on comprehensive digital forensic analysis of suspicious death case using industry-standard tools (Autopsy/Sleuth Kit, Volatility, Registry Explorer).",
+        "Analyzed disk images, RAM dumps, and Windows event logs to reconstruct timeline and establish evidence of third-party involvement",
+        "Documented complete chain of custody following ISO/IEC 27037 and NIST SP 800-86 standards"
+      ],
       "stack": [
         "Autopsy/Sleuth Kit",
         "Volatility",
@@ -93,9 +100,9 @@
       "heading": "Cybersecurity",
       "items": [
         "Network security architecture",
-        "Vulnerability assessment",
-        "Incident response",
-        "Security policy development",
+        "vulnerability assessment",
+        "incident response",
+        "security policy development",
         "VLAN segmentation",
         "DMZ configuration"
       ]
@@ -161,22 +168,22 @@
   ],
   "education": [
     {
-      "degree": "Master of Science in Information Technology, Cybersecurity Concentration",
+      "degree": "Master of Science in Information Technology, Cybersecurity Concentration – Full-time, in-person",
       "institution": "University of Texas at San Antonio (UTSA)",
-      "period": "May 2026",
-      "detail": "San Antonio, TX. U.S. residency year (2025–2026) of the dual UTSA–Tecnológico de Monterrey Master's in Cybersecurity. Coursework: Security Risk Analysis, Strategic Management of IT, Data Mining, Cyber Warfare, plus jointly-advised Independent Study research paper"
+      "period": "August 2025 – May 2026",
+      "detail": "U.S. residency year (2025–2026) of the dual UTSA–Tecnológico de Monterrey Master's in Cybersecurity. Coursework: Security Risk Analysis, Strategic Management of IT, Data Mining, Cyber Warfare, plus jointly-advised Independent Study research paper"
     },
     {
-      "degree": "Master's in Cybersecurity",
+      "degree": "Master's in Cybersecurity – Online, part-time",
       "institution": "Monterrey Institute of Technology (ITESM)",
-      "period": "Expected: December 2026",
-      "detail": "Monterrey, MX"
+      "period": "September 2024 – Expected: December 2026",
+      "detail": ""
     },
     {
       "degree": "Bachelor of Science in Electronics Engineering, Specialization in Cybersecurity",
       "institution": "Monterrey Institute of Technology (ITESM)",
-      "period": "June 2024",
-      "detail": "Monterrey, MX"
+      "period": "August 2020 – June 2024",
+      "detail": ""
     }
   ],
   "certifications": [
