@@ -1,0 +1,290 @@
+---
+import { Image } from "astro:assets";
+import StyleShell from "../../layouts/StyleShell.astro";
+import { cv } from "../../data/cv.ts";
+import mePhoto from "../../assets/me.jpg";
+
+const resume = `${import.meta.env.BASE_URL}/resume.pdf`.replace(/\/+/g, "/");
+const sheetNo = "SHT-01";
+const rev = "REV C";
+const drawnBy = cv.name.split(" ").map((p) => p[0]).join("").toUpperCase();
+---
+
+<StyleShell
+  slug="blueprint"
+  styleName="Blueprint"
+  fonts="family=Archivo+Narrow:wght@400;700&family=Archivo:wght@300;500;800&family=Share+Tech+Mono"
+  bodyClass="bp"
+>
+  <div class="paper" aria-hidden="true"></div>
+
+  <main id="main" class="sheet">
+    <!-- border + registration marks -->
+    <div class="frame" aria-hidden="true">
+      <span class="reg reg--tl"></span><span class="reg reg--tr"></span><span class="reg reg--bl"></span><span class="reg reg--br"></span>
+    </div>
+
+    <!-- Title block (classic drawing style, top-right) -->
+    <aside class="titleblock" aria-label="Drawing title block">
+      <div class="tb__row"><span class="tb__k">PROJECT</span><span class="tb__v">{cv.name.toUpperCase()}</span></div>
+      <div class="tb__row"><span class="tb__k">TITLE</span><span class="tb__v">NETWORK DIAGRAM — {cv.role.toUpperCase()}</span></div>
+      <div class="tb__grid">
+        <div><span class="tb__k">DRAWN</span><span class="tb__v">{drawnBy}</span></div>
+        <div><span class="tb__k">SHEET</span><span class="tb__v">{sheetNo}</span></div>
+        <div><span class="tb__k">REV</span><span class="tb__v">{rev}</span></div>
+        <div><span class="tb__k">SCALE</span><span class="tb__v">NTS</span></div>
+      </div>
+    </aside>
+
+    <!-- Hero: a core node -->
+    <section class="hero">
+      <div class="node node--core">
+        <span class="node__tag">CORE-RTR-01</span>
+        <div class="node__photo">
+          <Image src={mePhoto} alt={`${cv.name} — portrait`} widths={[240, 480]} sizes="220px" width={480} loading="eager" />
+          <span class="dim dim--w" aria-hidden="true">220</span>
+          <span class="dim dim--h" aria-hidden="true">275</span>
+        </div>
+      </div>
+      <div class="hero__text">
+        <p class="callout">① IDENTITY</p>
+        <h1 class="name">{cv.name}</h1>
+        <p class="role">{cv.role}</p>
+        <p class="summary">{cv.summary}</p>
+        <div class="legend">
+          <a class="legend__item" href={resume} target="_blank" rel="noopener"><span class="sym sym--doc" aria-hidden="true"></span>FULL SPECIFICATION (PDF)</a>
+          {cv.contact.map((c) => <a class="legend__item" href={c.href}><span class="sym sym--port" aria-hidden="true"></span>{c.label.toUpperCase()} · {c.value}</a>)}
+        </div>
+      </div>
+      <svg class="hero__wire" viewBox="0 0 200 300" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 150 H80 V40 H200" />
+        <path d="M0 150 H80 V260 H200" />
+        <circle cx="0" cy="150" r="4" />
+        <circle cx="200" cy="40" r="4" /><circle cx="200" cy="260" r="4" />
+      </svg>
+    </section>
+
+    <!-- Experience: segment of switches -->
+    <section class="seg">
+      <h2 class="seg__hd"><span class="callout">②</span> DISTRIBUTION LAYER — EXPERIENCE</h2>
+      <div class="bus" aria-hidden="true"></div>
+      <div class="nodes nodes--2">
+        {cv.experience.map((e, i) => (
+          <article class="node">
+            <span class="node__tag">DSW-{String(i + 1).padStart(2, "0")} · {e.period}</span>
+            <h3 class="node__title">{e.role}</h3>
+            <p class="node__sub">{e.company} — {e.location}</p>
+            {e.summary && <p class="node__desc">{e.summary}</p>}
+            <ul class="node__list">{e.highlights.map((h) => <li>{h}</li>)}</ul>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- Projects: access layer -->
+    <section class="seg">
+      <h2 class="seg__hd"><span class="callout">③</span> ACCESS LAYER — PROJECTS</h2>
+      <div class="bus" aria-hidden="true"></div>
+      <div class="nodes nodes--3">
+        {cv.projects.map((p, i) => (
+          <article class="node">
+            <span class="node__tag">ASW-{String(i + 1).padStart(2, "0")} · {p.year}</span>
+            <h3 class="node__title">{p.url ? <a href={p.url.startsWith("http") ? p.url : `https://${p.url}`}>{p.name}</a> : p.name}</h3>
+            <p class="node__sub">{p.stack.join(" · ")}</p>
+            {p.description && <p class="node__desc">{p.description}</p>}
+            {p.highlights && <ul class="node__list">{p.highlights.map((h) => <li>{h}</li>)}</ul>}
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <div class="two">
+      <!-- Education -->
+      <section class="seg">
+        <h2 class="seg__hd"><span class="callout">④</span> UPSTREAM — EDUCATION</h2>
+        <div class="bus" aria-hidden="true"></div>
+        <div class="nodes nodes--1">
+          {cv.education.map((e, i) => (
+            <article class="node node--slim">
+              <span class="node__tag">ISP-{String(i + 1).padStart(2, "0")} · {e.period}</span>
+              <h3 class="node__title">{e.degree}</h3>
+              <p class="node__sub">{e.institution}</p>
+              {e.detail && <p class="node__desc">{e.detail}</p>}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <!-- Certifications -->
+      <section class="seg">
+        <h2 class="seg__hd"><span class="callout">⑤</span> SECURITY APPLIANCES — CERTIFICATIONS</h2>
+        <div class="bus" aria-hidden="true"></div>
+        <div class="nodes nodes--1">
+          {cv.certifications.map((c, i) => (
+            <article class="node node--slim">
+              <span class="node__tag">FW-{String(i + 1).padStart(2, "0")} · {c.date}</span>
+              <div class="node__cert">
+                <div>
+                  <h3 class="node__title">{c.name}</h3>
+                  <p class="node__sub">{c.issuer}</p>
+                  {c.detail && <p class="node__desc">{c.detail}</p>}
+                </div>
+                {c.badgeImage && (
+                  <a class="badge" href={c.badgeId ? `https://www.credly.com/badges/${c.badgeId}` : undefined} target="_blank" rel="noopener noreferrer">
+                    <img src={c.badgeImage} alt={`${c.name} badge`} width="84" height="84" loading="lazy" />
+                  </a>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+
+    <!-- Skills: bill of materials -->
+    <section class="seg">
+      <h2 class="seg__hd"><span class="callout">⑥</span> BILL OF MATERIALS — SKILLS</h2>
+      <table class="bom">
+        <thead><tr><th>ITEM</th><th>CATEGORY</th><th>QTY</th><th>DESCRIPTION</th></tr></thead>
+        <tbody>
+          {cv.skills.map((g, i) => (
+            <tr>
+              <td class="bom__n">{String(i + 1).padStart(2, "0")}</td>
+              <td class="bom__cat">{g.heading}</td>
+              <td class="bom__n">{g.items.length}</td>
+              <td>{g.items.join(" / ")}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="notes">
+      <p>GENERAL NOTES: 1. ALL CONNECTIONS SHOWN ARE LOGICAL. 2. VERIFY CREDENTIALS BEFORE DEPLOYMENT. 3. DRAWING NOT TO SCALE.</p>
+    </footer>
+  </main>
+
+  <style is:global>
+    body.bp {
+      --blue: #0b2a66;
+      --blue-2: #0f3a86;
+      --ink: #e9f0ff;
+      --ink-dim: rgba(233, 240, 255, 0.62);
+      --line: rgba(233, 240, 255, 0.45);
+      --line-faint: rgba(233, 240, 255, 0.14);
+      --accent: #ffd166;
+      --sans: "Archivo", system-ui, sans-serif;
+      --narrow: "Archivo Narrow", var(--sans);
+      --mono: "Share Tech Mono", ui-monospace, monospace;
+      background: var(--blue);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-weight: 300;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+    .bp .paper {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.08), transparent 50%),
+        linear-gradient(var(--line-faint) 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(90deg, var(--line-faint) 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(rgba(233,240,255,0.26) 1px, transparent 1px) 0 0 / 120px 120px,
+        linear-gradient(90deg, rgba(233,240,255,0.26) 1px, transparent 1px) 0 0 / 120px 120px,
+        linear-gradient(180deg, var(--blue-2), var(--blue));
+    }
+    .bp .sheet { position: relative; z-index: 1; max-width: 1280px; margin: 1.5rem auto 0; padding: 3rem 3rem 8rem; min-height: 100vh; }
+    .bp .frame { position: absolute; inset: 0.75rem 0.75rem 1rem; border: 1px solid var(--line); pointer-events: none; }
+    .bp .frame::after { content: ""; position: absolute; inset: 6px; border: 1px solid var(--line-faint); }
+    .bp .reg { position: absolute; width: 14px; height: 14px; border: 1px solid var(--ink); }
+    .bp .reg--tl { top: -7px; left: -7px; } .bp .reg--tr { top: -7px; right: -7px; } .bp .reg--bl { bottom: -7px; left: -7px; } .bp .reg--br { bottom: -7px; right: -7px; }
+
+    .bp .titleblock { border: 1px solid var(--ink); font-family: var(--mono); font-size: 0.72rem; width: min(420px, 100%); margin: 0 0 3rem auto; background: rgba(11,42,102,0.6); animation: bp-draw 600ms ease both; }
+    @keyframes bp-draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+    .bp .tb__row { display: grid; grid-template-columns: 80px 1fr; border-bottom: 1px solid var(--ink); }
+    .bp .tb__grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .bp .tb__grid > div { display: grid; border-right: 1px solid var(--ink); }
+    .bp .tb__grid > div:last-child { border-right: 0; }
+    .bp .tb__k { padding: 0.3rem 0.5rem; color: var(--ink-dim); border-right: 1px solid var(--ink); font-size: 0.6rem; letter-spacing: 0.1em; }
+    .bp .tb__grid .tb__k { border-right: 0; border-bottom: 1px solid var(--line-faint); }
+    .bp .tb__v { padding: 0.3rem 0.5rem; color: var(--ink); letter-spacing: 0.04em; }
+
+    .bp .hero { position: relative; display: grid; grid-template-columns: 240px 200px 1fr; gap: 0; align-items: center; margin-bottom: 5rem; }
+    .bp .hero__wire { width: 200px; height: 300px; stroke: var(--ink); fill: none; stroke-width: 1.2; }
+    .bp .hero__wire circle { fill: var(--accent); stroke: none; }
+    .bp .hero__wire path { stroke-dasharray: 600; stroke-dashoffset: 600; animation: wire 1.4s ease-out 300ms forwards; }
+    @keyframes wire { to { stroke-dashoffset: 0; } }
+    .bp .hero__text { grid-column: 3; order: 3; animation: bp-fade 600ms ease 600ms both; }
+    .bp .hero .node--core { order: 1; }
+    .bp .hero .hero__wire { order: 2; }
+    @keyframes bp-fade { from { opacity: 0; } }
+    .bp .node__photo { position: relative; }
+    .bp .node__photo img { display: block; width: 100%; height: auto; filter: grayscale(1) contrast(1.1) brightness(1.05); mix-blend-mode: luminosity; opacity: 0.92; border: 1px solid var(--ink); }
+    .bp .dim { position: absolute; font-family: var(--mono); font-size: 0.6rem; color: var(--ink-dim); }
+    .bp .dim--w { left: 0; right: 0; bottom: -1.2rem; text-align: center; border-top: 1px solid var(--line); padding-top: 2px; }
+    .bp .dim--h { top: 0; bottom: 0; right: -1.5rem; writing-mode: vertical-rl; border-left: 1px solid var(--line); padding-left: 2px; display: flex; align-items: center; }
+    .bp .callout { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); margin: 0 0 0.6rem; letter-spacing: 0.2em; }
+    .bp .name { font-family: var(--narrow); font-weight: 700; font-size: clamp(2.6rem, 6vw, 5rem); line-height: 0.95; text-transform: uppercase; letter-spacing: 0.01em; margin: 0 0 0.6rem; }
+    .bp .role { font-family: var(--mono); color: var(--ink-dim); margin: 0 0 1.25rem; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.85rem; }
+    .bp .summary { max-width: 58ch; margin: 0 0 1.5rem; font-size: 1.02rem; }
+    .bp .legend { display: grid; gap: 0.4rem; font-family: var(--mono); font-size: 0.78rem; }
+    .bp .legend__item { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--ink); text-decoration: none; width: max-content; max-width: 100%; overflow-wrap: anywhere; border-bottom: 1px dashed transparent; }
+    .bp .legend__item:hover { border-bottom-color: var(--accent); color: var(--accent); }
+    .bp a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .bp .sym { width: 14px; height: 14px; border: 1px solid currentColor; flex: none; }
+    .bp .sym--doc { clip-path: polygon(0 0, 70% 0, 100% 30%, 100% 100%, 0 100%); background: var(--accent); border: 0; }
+    .bp .sym--port { border-radius: 50%; position: relative; }
+    .bp .sym--port::after { content: ""; position: absolute; inset: 4px; background: currentColor; border-radius: 50%; }
+
+    .bp .seg { margin-bottom: 4rem; position: relative; }
+    .bp .seg__hd { font-family: var(--narrow); font-weight: 700; font-size: 1rem; letter-spacing: 0.18em; margin: 0 0 1.25rem; display: flex; gap: 0.8rem; align-items: center; }
+    .bp .seg__hd .callout { margin: 0; }
+    .bp .bus { height: 1px; background: var(--ink); margin: 0 0 0; position: relative; }
+    .bp .bus::before, .bp .bus::after { content: ""; position: absolute; top: -3px; width: 7px; height: 7px; background: var(--accent); }
+    .bp .bus::before { left: 0; } .bp .bus::after { right: 0; }
+    .bp .nodes { display: grid; gap: 2rem; padding-top: 2rem; }
+    .bp .nodes--1 { grid-template-columns: 1fr; } .bp .nodes--2 { grid-template-columns: repeat(2, 1fr); } .bp .nodes--3 { grid-template-columns: repeat(3, 1fr); }
+    .bp .node { position: relative; border: 1px solid var(--ink); padding: 1.6rem 1.25rem 1.25rem; background: rgba(11,42,102,0.55); }
+    .bp .nodes .node::before { content: ""; position: absolute; left: 50%; top: -2rem; height: 2rem; width: 1px; background: var(--ink); }
+    .bp .nodes .node::after { content: ""; position: absolute; left: calc(50% - 3px); top: -3px; width: 6px; height: 6px; background: var(--blue); border: 1px solid var(--ink); border-radius: 50%; }
+    .bp .node--core { padding: 1.6rem 1rem 2.2rem; width: 240px; }
+    .bp .node__tag { position: absolute; top: -0.65rem; left: 0.9rem; padding: 0 0.4rem; background: var(--blue); font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em; color: var(--accent); }
+    .bp .node__title { font-family: var(--narrow); font-weight: 700; font-size: 1.2rem; margin: 0 0 0.2rem; text-transform: uppercase; letter-spacing: 0.02em; }
+    .bp .node__title a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--accent); } .bp .node__title a:hover { color: var(--accent); }
+    .bp .node__sub { margin: 0 0 0.8rem; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-dim); letter-spacing: 0.06em; }
+    .bp .node__desc { margin: 0 0 0.8rem; font-size: 0.92rem; }
+    .bp .node__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; font-size: 0.88rem; color: var(--ink-dim); }
+    .bp .node__list li { padding-left: 1.1rem; position: relative; }
+    .bp .node__list li::before { content: ""; position: absolute; left: 0; top: 0.65em; width: 7px; height: 1px; background: var(--accent); }
+    .bp .node__cert { display: flex; gap: 1rem; justify-content: space-between; align-items: flex-start; }
+    .bp .badge img { display: block; width: 84px; height: auto; filter: grayscale(1) brightness(1.3); transition: filter 150ms; }
+    .bp .badge:hover img { filter: none; }
+    .bp .two { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+
+    .bp .bom { width: 100%; border-collapse: collapse; font-size: 0.88rem; border: 1px solid var(--ink); }
+    .bp .bom th { font-family: var(--mono); font-weight: 400; font-size: 0.65rem; letter-spacing: 0.15em; text-align: left; padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--ink); color: var(--accent); background: rgba(0,0,0,0.15); }
+    .bp .bom td { padding: 0.65rem 0.8rem; border-bottom: 1px solid var(--line-faint); vertical-align: top; }
+    .bp .bom td, .bp .bom th { border-right: 1px solid var(--line-faint); } .bp .bom td:last-child, .bp .bom th:last-child { border-right: 0; }
+    .bp .bom__n { font-family: var(--mono); color: var(--ink-dim); width: 1%; white-space: nowrap; }
+    .bp .bom__cat { font-family: var(--narrow); font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+    .bp .bom tbody tr:hover { background: rgba(255,209,102,0.07); }
+    .bp .notes { font-family: var(--mono); font-size: 0.65rem; color: var(--ink-dim); letter-spacing: 0.06em; border-top: 1px solid var(--line); padding-top: 0.75rem; }
+
+    @media (max-width: 1000px) {
+      .bp .sheet { padding: 2rem 1.5rem 7rem; }
+      .bp .hero { grid-template-columns: 1fr; gap: 2rem; }
+      .bp .hero__wire { display: none; }
+      .bp .hero__text { grid-column: 1; }
+      .bp .nodes--2, .bp .nodes--3, .bp .two { grid-template-columns: 1fr; }
+      .bp .two { gap: 4rem; }
+    }
+    @media (max-width: 640px) {
+      .bp .dim--h { display: none; }
+      .bp .bom td:last-child { font-size: 0.8rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bp .titleblock, .bp .hero__text { animation: none; }
+      .bp .hero__wire path { animation: none; stroke-dashoffset: 0; }
+    }
+  </style>
+</StyleShell>
