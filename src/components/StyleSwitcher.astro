@@ -1,0 +1,115 @@
+---
+import { styles, styleHref } from "../data/styles.ts";
+
+export interface Props {
+  current: string; // slug; "" for the root design
+}
+const { current } = Astro.props;
+---
+
+<nav class="style-switcher" aria-label="Style explorations" data-style-switcher>
+  <button class="style-switcher__toggle" type="button" aria-expanded="false" aria-controls="style-switcher-list">
+    <span class="style-switcher__dot" aria-hidden="true"></span>
+    <span>STYLES</span>
+  </button>
+  <ul id="style-switcher-list" class="style-switcher__list" hidden>
+    {
+      styles.map((s) => (
+        <li>
+          <a
+            href={styleHref(s.slug)}
+            aria-current={s.slug === current ? "page" : undefined}
+          >
+            <strong>{s.name}</strong>
+            <span>{s.blurb}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<script>
+  const nav = document.querySelector<HTMLElement>("[data-style-switcher]");
+  const btn = nav?.querySelector<HTMLButtonElement>(".style-switcher__toggle");
+  const list = nav?.querySelector<HTMLElement>(".style-switcher__list");
+  if (btn && list) {
+    const set = (open: boolean) => {
+      btn.setAttribute("aria-expanded", String(open));
+      list.hidden = !open;
+    };
+    btn.addEventListener("click", () => set(list.hidden));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") set(false);
+    });
+    document.addEventListener("click", (e) => {
+      if (!nav!.contains(e.target as Node)) set(false);
+    });
+  }
+</script>
+
+<style is:global>
+  /* Deliberately neutral so it sits on top of every style without clashing. */
+  .style-switcher {
+    position: fixed;
+    bottom: 1.25rem;
+    left: 1.25rem;
+    z-index: 20000;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+  }
+  .style-switcher__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(12, 12, 14, 0.88);
+    color: #fff;
+    letter-spacing: 0.22em;
+    cursor: pointer;
+    border-radius: 2px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  .style-switcher__toggle:hover { border-color: #fff; }
+  .style-switcher__toggle:focus-visible { outline: 2px solid #ffd60a; outline-offset: 2px; }
+  .style-switcher__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #3dff8f;
+    box-shadow: 0 0 8px #3dff8f;
+    animation: ss-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes ss-pulse { 50% { opacity: 0.35; } }
+  .style-switcher__list {
+    list-style: none;
+    margin: 0 0 0.5rem;
+    padding: 0.35rem;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    min-width: 230px;
+    background: rgba(12, 12, 14, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 2px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  }
+  .style-switcher__list a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.55rem 0.7rem;
+    color: #e8e8ea;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+  }
+  .style-switcher__list a strong { font-weight: 700; letter-spacing: 0.04em; }
+  .style-switcher__list a span { opacity: 0.6; font-size: 0.66rem; }
+  .style-switcher__list a:hover { background: rgba(255, 255, 255, 0.08); border-left-color: #fff; }
+  .style-switcher__list a[aria-current="page"] { border-left-color: #3dff8f; background: rgba(61, 255, 143, 0.08); }
+  .style-switcher__list a:focus-visible { outline: 2px solid #ffd60a; outline-offset: -2px; }
+  @media (prefers-reduced-motion: reduce) { .style-switcher__dot { animation: none; } }
+</style>

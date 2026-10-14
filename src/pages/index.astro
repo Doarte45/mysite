@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import BaseHead from "../layouts/BaseHead.astro";
+import StyleSwitcher from "../components/StyleSwitcher.astro";
 import { cv } from "../data/cv.ts";
 import mePhoto from "../assets/me.jpg";
 
@@ -298,6 +299,8 @@ const personLd = {
         </section>
       </div>
     </main>
+
+    <StyleSwitcher current="" />
 
     <script>
       const root = document.documentElement;

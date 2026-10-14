@@ -69,3 +69,18 @@ src/
 ```
 
 Edit content in `src/data/cv.ts` and the page updates. The `CV` interface enforces the shape of every field rendered by the page.
+
+## Style explorations (branch `style-explorations`)
+
+Five alternative visual directions live under `src/pages/styles/`, each a full page built from the same `cv` data. A floating **STYLES** button (bottom-left, `src/components/StyleSwitcher.astro`) is injected on every page so you can jump between them. The registry of styles is `src/data/styles.ts`; `src/layouts/StyleShell.astro` provides the shared `<head>`, fonts, and switcher.
+
+| Route | Style | Idea |
+| :-- | :-- | :-- |
+| `/` | Topology (current) | The live design, untouched |
+| `/styles/terminal/` | Terminal | Phosphor-green TTY session; sections are shell commands |
+| `/styles/soc/` | SOC Console | Dark ops dashboard with stat tiles, severity bars, case cards |
+| `/styles/pcap/` | Packet Capture | Light Wireshark-style frame list with protocol row colours and expandable dissections |
+| `/styles/blueprint/` | Blueprint | Cyanotype network schematic with title block, buses, and a bill of materials |
+| `/styles/dossier/` | Dossier | Manila case file with typewriter type, stamps, and redaction bars |
+
+Style pages are `noindex`. To adopt one, move its markup/styles into `index.astro` and delete the rest.
