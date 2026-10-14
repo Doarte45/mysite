@@ -129,7 +129,7 @@ const personLd = {
         </header>
 
         <section class="bio">
-          <div class="network-tag">PACKET_INSPECTION</div>
+          <div class="network-tag">PACKET_INSPECTION <span class="network-tag__alias">// about me</span></div>
           <p class="bio__text">{cv.summary}</p>
           <div class="dossier-bar">
             <a href={`${import.meta.env.BASE_URL}/resume.pdf`.replace(/\/+/g, "/")} target="_blank" rel="noopener" class="dossier-btn">
@@ -142,14 +142,14 @@ const personLd = {
         </section>
       </div>
 
-      <nav class="route-table" aria-label="Sections">
-        <span class="route-table__label">ROUTE_TABLE</span>
-        <a href="#uplink">UPLINK_PROTOCOL</a>
-        <a href="#hops">HOP_HISTORY</a>
-        <a href="#missions">MISSION_LOG</a>
-        <a href="#training">TRAINING_DATA</a>
-        <a href="#creds">CRED_CHAIN</a>
-        <a href="#stack">SECURITY_STACK</a>
+      <nav class="route-table" aria-label="Jump to a section">
+        <span class="route-table__label">ROUTE_TABLE <span class="route-table__hint">// jump to</span></span>
+        <a href="#uplink" title="Contact">UPLINK_PROTOCOL</a>
+        <a href="#hops" title="Work experience">HOP_HISTORY</a>
+        <a href="#missions" title="Projects">MISSION_LOG</a>
+        <a href="#training" title="Education">TRAINING_DATA</a>
+        <a href="#creds" title="Certifications">CRED_CHAIN</a>
+        <a href="#stack" title="Skills">SECURITY_STACK</a>
       </nav>
 
       <div class="content-sections">
@@ -157,6 +157,7 @@ const personLd = {
           <div class="header-with-shape">
             <div class="mini-triangle"></div>
             <h2>UPLINK_PROTOCOL</h2>
+            <span class="h2-alias" aria-hidden="true">// contact</span>
           </div>
           <div class="contact-links">
             {
@@ -171,6 +172,7 @@ const personLd = {
           <div class="header-with-shape">
             <div class="mini-square"></div>
             <h2>HOP_HISTORY</h2>
+            <span class="h2-alias" aria-hidden="true">// work experience</span>
           </div>
           <div class="exp-grid">
             {
@@ -197,6 +199,7 @@ const personLd = {
           <div class="header-with-shape">
             <div class="mini-square"></div>
             <h2>MISSION_LOG</h2>
+            <span class="h2-alias" aria-hidden="true">// projects</span>
           </div>
           <div class="exp-grid">
             {
@@ -224,6 +227,7 @@ const personLd = {
             <div class="header-with-shape">
               <div class="mini-square"></div>
               <h2>TRAINING_DATA</h2>
+            <span class="h2-alias" aria-hidden="true">// education</span>
             </div>
             <div class="edu-list">
               {
@@ -243,6 +247,7 @@ const personLd = {
             <div class="header-with-shape">
               <div class="mini-square"></div>
               <h2>CRED_CHAIN</h2>
+            <span class="h2-alias" aria-hidden="true">// certifications</span>
             </div>
             <div class="edu-list">
               {
@@ -291,6 +296,7 @@ const personLd = {
           <div class="header-with-shape">
             <div class="mini-circle"></div>
             <h2>SECURITY_STACK</h2>
+            <span class="h2-alias" aria-hidden="true">// skills</span>
           </div>
           <div class="skill-groups">
             {
@@ -535,23 +541,52 @@ const personLd = {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.6rem 1.4rem;
+        gap: 0.6rem 0.6rem;
         padding: 0.9rem 0;
         margin-bottom: 5rem;
         border-top: 1px solid var(--rule);
         border-bottom: 1px solid var(--rule);
         font-family: var(--mono);
-        font-size: 0.7rem;
-        letter-spacing: 0.18em;
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
       }
-      .v3 .route-table__label { color: var(--accent); font-weight: 700; }
+      .v3 .route-table__label { flex-basis: 100%; color: var(--accent); font-weight: 700; margin-bottom: 0.2rem; }
+      .v3 .route-table__hint { color: var(--muted-2); font-weight: 400; letter-spacing: 0.06em; }
       .v3 .route-table a {
-        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.7rem;
+        color: var(--text);
         text-decoration: none;
-        border-bottom: 1px solid transparent;
-        transition: color 0.15s ease, border-color 0.15s ease;
+        border: 1px solid var(--rule);
+        border-radius: 999px;
+        transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
       }
-      .v3 .route-table a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+      .v3 .route-table a::before {
+        content: "↓";
+        color: var(--accent);
+        font-size: 0.75rem;
+        transition: transform 0.15s ease;
+      }
+      .v3 .route-table a:hover,
+      .v3 .route-table a:focus-visible {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: var(--accent-tint);
+      }
+      .v3 .route-table a:hover::before { transform: translateY(2px); }
+
+      .v3 .h2-alias,
+      .v3 .network-tag__alias {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+        text-transform: lowercase;
+        color: var(--muted-2);
+      }
+      .v3 .network-tag__alias { color: rgba(255, 255, 255, 0.75); margin-left: 0.25rem; }
       .v3 [id] { scroll-margin-top: 2rem; }
 
       .v3 .portrait {
