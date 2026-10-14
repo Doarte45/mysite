@@ -5,73 +5,188 @@ import { cv } from "../../data/cv.ts";
 import mePhoto from "../../assets/me.jpg";
 
 const resume = `${import.meta.env.BASE_URL}/resume.pdf`.replace(/\/+/g, "/");
-const sheetNo = "SHT-01";
-const rev = "REV C";
 const drawnBy = cv.name.split(" ").map((p) => p[0]).join("").toUpperCase();
+const pad = (n: number) => String(n).padStart(2, "0");
+
+// Addressing plan: every section is a VLAN / subnet, every item a device with a mgmt IP.
+const vlans = {
+  core: { id: 1, net: "10.0.1.0/24" },
+  exp: { id: 20, net: "10.0.20.0/24" },
+  proj: { id: 30, net: "10.0.30.0/24" },
+  edu: { id: 40, net: "10.0.40.0/24" },
+  cert: { id: 50, net: "10.0.50.0/24" },
+  skills: { id: 60, net: "10.0.60.0/24" },
+};
+const ip = (vlan: number, host: number) => `10.0.${vlan}.${host}`;
+
+/* ---------- Topology overview geometry (viewBox 1000 x 420) ---------- */
+const W = 1000;
+const H = 455;
+const cloud = { x: 500, y: 48 };
+const fw = { x: 500, y: 130 };
+const core = { x: 500, y: 225 };
+const spread = (n: number, y: number, left = 90, right = W - 90) =>
+  Array.from({ length: n }, (_, i) => ({ x: n === 1 ? W / 2 : left + ((right - left) * i) / (n - 1), y }));
+const expNodes = spread(cv.experience.length, 320, 200, 800);
+const projNodes = spread(cv.projects.length, 395, 110, 890);
+const eduNodes = spread(cv.education.length, 130, 110, 320);
+const certNodes = spread(cv.certifications.length, 130, 680, 890);
+const ortho = (a: { x: number; y: number }, b: { x: number; y: number }) => `M${a.x} ${a.y} V${(a.y + b.y) / 2} H${b.x} V${b.y}`;
 ---
 
 <StyleShell
   slug="blueprint"
   styleName="Blueprint"
-  fonts="family=Archivo+Narrow:wght@400;700&family=Archivo:wght@300;500;800&family=Share+Tech+Mono"
+  fonts="family=Archivo+Narrow:wght@400;700&family=Archivo:wght@400;500;800&family=Share+Tech+Mono"
   bodyClass="bp"
 >
-  <div class="paper" aria-hidden="true"></div>
-
   <main id="main" class="sheet">
-    <!-- border + registration marks -->
     <div class="frame" aria-hidden="true">
       <span class="reg reg--tl"></span><span class="reg reg--tr"></span><span class="reg reg--bl"></span><span class="reg reg--br"></span>
     </div>
 
-    <!-- Title block (classic drawing style, top-right) -->
-    <aside class="titleblock" aria-label="Drawing title block">
-      <div class="tb__row"><span class="tb__k">PROJECT</span><span class="tb__v">{cv.name.toUpperCase()}</span></div>
-      <div class="tb__row"><span class="tb__k">TITLE</span><span class="tb__v">NETWORK DIAGRAM — {cv.role.toUpperCase()}</span></div>
-      <div class="tb__grid">
-        <div><span class="tb__k">DRAWN</span><span class="tb__v">{drawnBy}</span></div>
-        <div><span class="tb__k">SHEET</span><span class="tb__v">{sheetNo}</span></div>
-        <div><span class="tb__k">REV</span><span class="tb__v">{rev}</span></div>
-        <div><span class="tb__k">SCALE</span><span class="tb__v">NTS</span></div>
-      </div>
-    </aside>
+    <!-- Title block + legend row -->
+    <div class="tb-row">
+      <aside class="legend" aria-label="Symbol legend">
+        <h2 class="legend__hd">LEGEND</h2>
+        <ul>
+          <li><svg viewBox="0 0 40 40" class="sym"><use href="#sym-router" /></svg> ROUTER — IDENTITY</li>
+          <li><svg viewBox="0 0 40 40" class="sym"><use href="#sym-fw" /></svg> FIREWALL — CERTIFICATIONS</li>
+          <li><svg viewBox="0 0 40 40" class="sym"><use href="#sym-switch" /></svg> SWITCH — EXPERIENCE / PROJECTS</li>
+          <li><svg viewBox="0 0 40 40" class="sym"><use href="#sym-cloud" /></svg> UPSTREAM — EDUCATION</li>
+          <li><svg viewBox="0 0 40 40" class="sym"><use href="#sym-host" /></svg> HOST — SKILL</li>
+        </ul>
+      </aside>
+      <aside class="titleblock" aria-label="Drawing title block">
+        <div class="tb__row"><span class="tb__k">PROJECT</span><span class="tb__v">{cv.name.toUpperCase()}</span></div>
+        <div class="tb__row"><span class="tb__k">TITLE</span><span class="tb__v">L2/L3 NETWORK TOPOLOGY — {cv.role.toUpperCase()}</span></div>
+        <div class="tb__grid">
+          <div><span class="tb__k">DRAWN</span><span class="tb__v">{drawnBy}</span></div>
+          <div><span class="tb__k">SHEET</span><span class="tb__v">01 / 01</span></div>
+          <div><span class="tb__k">REV</span><span class="tb__v">C</span></div>
+          <div><span class="tb__k">MGMT</span><span class="tb__v">{vlans.core.net}</span></div>
+        </div>
+      </aside>
+    </div>
 
-    <!-- Hero: a core node -->
-    <section class="hero">
-      <div class="node node--core">
-        <span class="node__tag">CORE-RTR-01</span>
-        <div class="node__photo">
-          <Image src={mePhoto} alt={`${cv.name} — portrait`} widths={[240, 480]} sizes="220px" width={480} loading="eager" />
-          <span class="dim dim--w" aria-hidden="true">220</span>
-          <span class="dim dim--h" aria-hidden="true">275</span>
-        </div>
-      </div>
-      <div class="hero__text">
-        <p class="callout">① IDENTITY</p>
-        <h1 class="name">{cv.name}</h1>
-        <p class="role">{cv.role}</p>
-        <p class="summary">{cv.summary}</p>
-        <div class="legend">
-          <a class="legend__item" href={resume} target="_blank" rel="noopener"><span class="sym sym--doc" aria-hidden="true"></span>FULL SPECIFICATION (PDF)</a>
-          {cv.contact.map((c) => <a class="legend__item" href={c.href}><span class="sym sym--port" aria-hidden="true"></span>{c.label.toUpperCase()} · {c.value}</a>)}
-        </div>
-      </div>
-      <svg class="hero__wire" viewBox="0 0 200 300" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 150 H80 V40 H200" />
-        <path d="M0 150 H80 V260 H200" />
-        <circle cx="0" cy="150" r="4" />
-        <circle cx="200" cy="40" r="4" /><circle cx="200" cy="260" r="4" />
+    <!-- Symbol defs -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <g id="sym-router">
+          <circle cx="20" cy="20" r="17" fill="#fff" stroke="currentColor" stroke-width="1.6" />
+          <path d="M10 15 h14 m-3 -3 l3 3 -3 3 M30 25 h-14 m3 -3 l-3 3 3 3 M15 10 v14 m-3 -3 l3 3 3 -3 M25 30 v-14 m-3 3 l3 -3 3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+        <g id="sym-switch">
+          <rect x="4" y="11" width="32" height="18" rx="1" fill="#fff" stroke="currentColor" stroke-width="1.6" />
+          <path d="M9 17 h12 m-2.5 -2.5 l2.5 2.5 -2.5 2.5 M31 23 h-12 m2.5 -2.5 l-2.5 2.5 2.5 2.5 M9 23 h8 m-2 -2 l2 2 -2 2 M31 17 h-8 m2 -2 l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+        <g id="sym-fw">
+          <rect x="5" y="9" width="30" height="22" fill="#fff" stroke="currentColor" stroke-width="1.6" />
+          <path d="M5 16 h30 M5 23 h30 M15 9 v7 M25 9 v7 M10 16 v7 M20 16 v7 M30 16 v7 M15 23 v8 M25 23 v8" stroke="currentColor" stroke-width="1.1" />
+        </g>
+        <g id="sym-cloud">
+          <path d="M11 28 a6 6 0 0 1 1 -12 a8 8 0 0 1 15 -3 a6 6 0 0 1 7 8 a5 5 0 0 1 -2 9 z" fill="#fff" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+        </g>
+        <g id="sym-host">
+          <rect x="8" y="9" width="24" height="16" rx="1" fill="#fff" stroke="currentColor" stroke-width="1.6" />
+          <path d="M14 31 h12 M20 25 v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </g>
+      </defs>
+    </svg>
+
+    <!-- ① Topology overview: clickable map of the whole CV -->
+    <section class="seg seg--map" aria-labelledby="map-hd">
+      <h2 class="seg__hd" id="map-hd"><span class="callout">①</span> TOPOLOGY OVERVIEW <span class="seg__meta">click a node to jump to its section</span></h2>
+      <svg class="map" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Network topology map of the CV sections">
+        <!-- links -->
+        <g class="map__links">
+          <path d={ortho(cloud, fw)} />
+          <path d={ortho(fw, core)} />
+          {eduNodes.map((n) => <path d={`M${n.x} ${n.y} V${cloud.y} H${cloud.x - 40}`} class="map__link--dash" />)}
+          {certNodes.map((n) => <path d={`M${n.x} ${n.y} V${fw.y} H${fw.x + 40}`} />)}
+          {expNodes.map((n) => <path d={ortho(core, n)} />)}
+          {projNodes.map((n, i) => <path d={ortho(expNodes[Math.min(i, expNodes.length - 1)]!, n)} />)}
+        </g>
+        <!-- interface labels -->
+        <g class="map__if">
+          <text x={core.x + 8} y={core.y - 28}>Gi0/0</text>
+          {expNodes.map((n, i) => <text x={n.x + 6} y={n.y - 24}>Gi0/{i + 1}</text>)}
+          {projNodes.map((n, i) => <text x={n.x + 6} y={n.y - 24}>Fa0/{i + 1}</text>)}
+        </g>
+        <!-- nodes -->
+        <a href="#edu" class="map__node"><g transform={`translate(${cloud.x - 20} ${cloud.y - 20})`}><use href="#sym-cloud" /></g><text x={cloud.x} y={cloud.y + 34} text-anchor="middle">UPSTREAM</text></a>
+        <a href="#cert" class="map__node"><g transform={`translate(${fw.x - 20} ${fw.y - 20})`}><use href="#sym-fw" /></g><text x={fw.x - 28} y={fw.y + 4} text-anchor="end">FW-EDGE</text></a>
+        <a href="#core" class="map__node map__node--core"><g transform={`translate(${core.x - 20} ${core.y - 20})`}><use href="#sym-router" /></g><text x={core.x - 28} y={core.y + 4} text-anchor="end">CORE-RTR-01 · {ip(vlans.core.id, 1)}</text></a>
+        {eduNodes.map((n, i) => (
+          <a href="#edu" class="map__node"><g transform={`translate(${n.x - 20} ${n.y - 20})`}><use href="#sym-cloud" /></g><text x={n.x} y={n.y + 34} text-anchor="middle">ISP-{pad(i + 1)}</text></a>
+        ))}
+        {certNodes.map((n, i) => (
+          <a href="#cert" class="map__node"><g transform={`translate(${n.x - 20} ${n.y - 20})`}><use href="#sym-fw" /></g><text x={n.x} y={n.y + 34} text-anchor="middle">FW-{pad(i + 1)}</text></a>
+        ))}
+        {expNodes.map((n, i) => (
+          <a href="#exp" class="map__node"><g transform={`translate(${n.x - 20} ${n.y - 20})`}><use href="#sym-switch" /></g><text x={n.x} y={n.y + 34} text-anchor="middle">DSW-{pad(i + 1)}</text></a>
+        ))}
+        {projNodes.map((n, i) => (
+          <a href="#proj" class="map__node"><g transform={`translate(${n.x - 20} ${n.y - 20})`}><use href="#sym-switch" /></g><text x={n.x} y={n.y + 34} text-anchor="middle">ASW-{pad(i + 1)}</text></a>
+        ))}
+        <a href="#skills" class="map__node"><g transform={`translate(${W - 60} ${core.y - 20})`}><use href="#sym-host" /></g><text x={W - 40} y={core.y + 34} text-anchor="middle">HOSTS ×{cv.skills.reduce((a, g) => a + g.items.length, 0)}</text></a>
+        <path d={`M${core.x + 20} ${core.y} H${W - 60}`} class="map__link--dash" />
+        <text x={(core.x + W - 60) / 2} y={core.y - 8} text-anchor="middle" class="map__vlan">VLAN {vlans.skills.id} trunk</text>
       </svg>
     </section>
 
-    <!-- Experience: segment of switches -->
-    <section class="seg">
-      <h2 class="seg__hd"><span class="callout">②</span> DISTRIBUTION LAYER — EXPERIENCE</h2>
-      <div class="bus" aria-hidden="true"></div>
+    <!-- ② Core router: identity -->
+    <section class="seg" id="core">
+      <h2 class="seg__hd"><span class="callout">②</span> CORE LAYER — IDENTITY <span class="seg__meta">VLAN {vlans.core.id} · {vlans.core.net}</span></h2>
+      <div class="hero">
+        <div class="node node--core">
+          <span class="node__tag"><svg viewBox="0 0 40 40" class="sym sym--tag"><use href="#sym-router" /></svg>CORE-RTR-01 · {ip(vlans.core.id, 1)}</span>
+          <div class="node__photo">
+            <Image src={mePhoto} alt={`${cv.name} — portrait`} widths={[240, 480]} sizes="220px" width={480} loading="eager" />
+          </div>
+          <dl class="node__ports">
+            <dt>Gi0/0</dt><dd>uplink → FW-EDGE</dd>
+            <dt>Gi0/1-{pad(cv.experience.length)}</dt><dd>distribution</dd>
+            <dt>Lo0</dt><dd>{ip(vlans.core.id, 1)}/32</dd>
+          </dl>
+        </div>
+        <div class="hero__text">
+          <h1 class="name">{cv.name}</h1>
+          <p class="role">{cv.role}</p>
+          <p class="summary">{cv.summary}</p>
+
+          <h3 class="ifb__hd">show ip interface brief</h3>
+          <table class="ifb">
+            <thead><tr><th>Interface</th><th>Address</th><th>Status</th><th>Protocol</th></tr></thead>
+            <tbody>
+              {cv.contact.map((c, i) => (
+                <tr>
+                  <td class="mono">{c.label.toLowerCase()}{i}</td>
+                  <td><a href={c.href}>{c.value}</a></td>
+                  <td class="up">up</td><td class="up">up</td>
+                </tr>
+              ))}
+              <tr>
+                <td class="mono">resume0</td>
+                <td><a href={resume} target="_blank" rel="noopener">full specification (PDF) ↗</a></td>
+                <td class="up">up</td><td class="up">up</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ Distribution: experience -->
+    <section class="seg" id="exp">
+      <h2 class="seg__hd"><span class="callout">③</span> DISTRIBUTION LAYER — EXPERIENCE <span class="seg__meta">VLAN {vlans.exp.id} · {vlans.exp.net}</span></h2>
+      <div class="bus" aria-hidden="true"><span class="bus__lbl">trunk from CORE-RTR-01 Gi0/1-{pad(cv.experience.length)}</span></div>
       <div class="nodes nodes--2">
         {cv.experience.map((e, i) => (
           <article class="node">
-            <span class="node__tag">DSW-{String(i + 1).padStart(2, "0")} · {e.period}</span>
+            <span class="node__if" aria-hidden="true">Gi0/{i + 1}</span>
+            <span class="node__tag"><svg viewBox="0 0 40 40" class="sym sym--tag"><use href="#sym-switch" /></svg>DSW-{pad(i + 1)} · {ip(vlans.exp.id, i + 1)}</span>
+            <span class="node__time">{e.period}</span>
             <h3 class="node__title">{e.role}</h3>
             <p class="node__sub">{e.company} — {e.location}</p>
             {e.summary && <p class="node__desc">{e.summary}</p>}
@@ -81,14 +196,16 @@ const drawnBy = cv.name.split(" ").map((p) => p[0]).join("").toUpperCase();
       </div>
     </section>
 
-    <!-- Projects: access layer -->
-    <section class="seg">
-      <h2 class="seg__hd"><span class="callout">③</span> ACCESS LAYER — PROJECTS</h2>
-      <div class="bus" aria-hidden="true"></div>
+    <!-- ④ Access: projects -->
+    <section class="seg" id="proj">
+      <h2 class="seg__hd"><span class="callout">④</span> ACCESS LAYER — PROJECTS <span class="seg__meta">VLAN {vlans.proj.id} · {vlans.proj.net}</span></h2>
+      <div class="bus" aria-hidden="true"><span class="bus__lbl">access ports Fa0/1-{pad(cv.projects.length)}</span></div>
       <div class="nodes nodes--3">
         {cv.projects.map((p, i) => (
           <article class="node">
-            <span class="node__tag">ASW-{String(i + 1).padStart(2, "0")} · {p.year}</span>
+            <span class="node__if" aria-hidden="true">Fa0/{i + 1}</span>
+            <span class="node__tag"><svg viewBox="0 0 40 40" class="sym sym--tag"><use href="#sym-switch" /></svg>ASW-{pad(i + 1)} · {ip(vlans.proj.id, i + 1)}</span>
+            <span class="node__time">{p.year}</span>
             <h3 class="node__title">{p.url ? <a href={p.url.startsWith("http") ? p.url : `https://${p.url}`}>{p.name}</a> : p.name}</h3>
             <p class="node__sub">{p.stack.join(" · ")}</p>
             {p.description && <p class="node__desc">{p.description}</p>}
@@ -99,14 +216,15 @@ const drawnBy = cv.name.split(" ").map((p) => p[0]).join("").toUpperCase();
     </section>
 
     <div class="two">
-      <!-- Education -->
-      <section class="seg">
-        <h2 class="seg__hd"><span class="callout">④</span> UPSTREAM — EDUCATION</h2>
-        <div class="bus" aria-hidden="true"></div>
+      <!-- ⑤ Upstream: education -->
+      <section class="seg" id="edu">
+        <h2 class="seg__hd"><span class="callout">⑤</span> UPSTREAM — EDUCATION <span class="seg__meta">VLAN {vlans.edu.id}</span></h2>
+        <div class="bus bus--dash" aria-hidden="true"><span class="bus__lbl">WAN · BGP peers</span></div>
         <div class="nodes nodes--1">
           {cv.education.map((e, i) => (
             <article class="node node--slim">
-              <span class="node__tag">ISP-{String(i + 1).padStart(2, "0")} · {e.period}</span>
+              <span class="node__tag"><svg viewBox="0 0 40 40" class="sym sym--tag"><use href="#sym-cloud" /></svg>ISP-{pad(i + 1)} · AS{65000 + i + 1}</span>
+              <span class="node__time">{e.period}</span>
               <h3 class="node__title">{e.degree}</h3>
               <p class="node__sub">{e.institution}</p>
               {e.detail && <p class="node__desc">{e.detail}</p>}
@@ -115,14 +233,15 @@ const drawnBy = cv.name.split(" ").map((p) => p[0]).join("").toUpperCase();
         </div>
       </section>
 
-      <!-- Certifications -->
-      <section class="seg">
-        <h2 class="seg__hd"><span class="callout">⑤</span> SECURITY APPLIANCES — CERTIFICATIONS</h2>
-        <div class="bus" aria-hidden="true"></div>
+      <!-- ⑥ Edge firewalls: certifications -->
+      <section class="seg" id="cert">
+        <h2 class="seg__hd"><span class="callout">⑥</span> EDGE — CERTIFICATIONS <span class="seg__meta">VLAN {vlans.cert.id}</span></h2>
+        <div class="bus" aria-hidden="true"><span class="bus__lbl">policy: verified → permit</span></div>
         <div class="nodes nodes--1">
           {cv.certifications.map((c, i) => (
             <article class="node node--slim">
-              <span class="node__tag">FW-{String(i + 1).padStart(2, "0")} · {c.date}</span>
+              <span class="node__tag"><svg viewBox="0 0 40 40" class="sym sym--tag"><use href="#sym-fw" /></svg>FW-{pad(i + 1)} · {ip(vlans.cert.id, i + 1)}</span>
+              <span class="node__time">{c.date}</span>
               <div class="node__cert">
                 <div>
                   <h3 class="node__title">{c.name}</h3>
@@ -141,18 +260,19 @@ const drawnBy = cv.name.split(" ").map((p) => p[0]).join("").toUpperCase();
       </section>
     </div>
 
-    <!-- Skills: bill of materials -->
-    <section class="seg">
-      <h2 class="seg__hd"><span class="callout">⑥</span> BILL OF MATERIALS — SKILLS</h2>
+    <!-- ⑦ VLAN database: skills -->
+    <section class="seg" id="skills">
+      <h2 class="seg__hd"><span class="callout">⑦</span> VLAN DATABASE — SKILLS <span class="seg__meta">show vlan brief</span></h2>
       <table class="bom">
-        <thead><tr><th>ITEM</th><th>CATEGORY</th><th>QTY</th><th>DESCRIPTION</th></tr></thead>
+        <thead><tr><th>VLAN</th><th>Name</th><th>Subnet</th><th>Ports</th><th>Hosts</th></tr></thead>
         <tbody>
           {cv.skills.map((g, i) => (
             <tr>
-              <td class="bom__n">{String(i + 1).padStart(2, "0")}</td>
+              <td class="bom__n">{vlans.skills.id + i * 10}</td>
               <td class="bom__cat">{g.heading}</td>
+              <td class="bom__n">10.0.{vlans.skills.id + i * 10}.0/24</td>
               <td class="bom__n">{g.items.length}</td>
-              <td>{g.items.join(" / ")}</td>
+              <td><ul class="hosts">{g.items.map((s) => <li><svg viewBox="0 0 40 40" class="sym sym--host"><use href="#sym-host" /></svg>{s}</li>)}</ul></td>
             </tr>
           ))}
         </tbody>
@@ -160,37 +280,45 @@ const drawnBy = cv.name.split(" ").map((p) => p[0]).join("").toUpperCase();
     </section>
 
     <footer class="notes">
-      <p>GENERAL NOTES: 1. ALL CONNECTIONS SHOWN ARE LOGICAL. 2. VERIFY CREDENTIALS BEFORE DEPLOYMENT. 3. DRAWING NOT TO SCALE.</p>
+      <p>GENERAL NOTES: 1. ALL LINKS SHOWN ARE LOGICAL. 2. ADDRESSING IS ILLUSTRATIVE (RFC 1918). 3. VERIFY CREDENTIALS BEFORE DEPLOYMENT. 4. DRAWING NOT TO SCALE.</p>
     </footer>
   </main>
 
   <style is:global>
     body.bp {
-      --blue: #f7f6f2;
-      --blue-2: #f7f6f2;
+      --paper: #f7f6f2;
       --ink: #16181d;
-      --ink-dim: rgba(22, 24, 29, 0.6);
+      --ink-dim: rgba(22, 24, 29, 0.62);
       --line: rgba(22, 24, 29, 0.5);
       --line-faint: rgba(22, 24, 29, 0.12);
       --accent: #c8461b;
+      --ok: #1f7a3a;
       --sans: "Archivo", system-ui, sans-serif;
       --narrow: "Archivo Narrow", var(--sans);
       --mono: "Share Tech Mono", ui-monospace, monospace;
-      background: var(--blue);
+      background: var(--paper);
       color: var(--ink);
       font-family: var(--sans);
-      font-weight: 400;
       line-height: 1.55;
       min-height: 100vh;
+      scroll-behavior: smooth;
     }
-    .bp .paper { display: none; }
-    .bp .sheet { position: relative; z-index: 1; max-width: 1280px; margin: 1.5rem auto 0; padding: 3rem 3rem 8rem; min-height: 100vh; }
+    .bp .sheet { position: relative; max-width: 1280px; margin: 1.5rem auto 0; padding: 3rem 3rem 8rem; min-height: 100vh; }
     .bp .frame { position: absolute; inset: 0.75rem 0.75rem 1rem; border: 1px solid var(--line); pointer-events: none; }
     .bp .frame::after { content: ""; position: absolute; inset: 6px; border: 1px solid var(--line-faint); }
     .bp .reg { position: absolute; width: 14px; height: 14px; border: 1px solid var(--ink); }
     .bp .reg--tl { top: -7px; left: -7px; } .bp .reg--tr { top: -7px; right: -7px; } .bp .reg--bl { bottom: -7px; left: -7px; } .bp .reg--br { bottom: -7px; right: -7px; }
+    .bp [id] { scroll-margin-top: 1.5rem; }
 
-    .bp .titleblock { border: 1px solid var(--ink); font-family: var(--mono); font-size: 0.72rem; width: min(420px, 100%); margin: 0 0 3rem auto; background: #fff; animation: bp-draw 600ms ease both; }
+    .bp .tb-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; margin-bottom: 2.5rem; }
+    .bp .legend { border: 1px solid var(--ink); background: #fff; padding: 0.6rem 0.9rem 0.7rem; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; }
+    .bp .legend__hd { margin: 0 0 0.4rem; font: inherit; color: var(--accent); letter-spacing: 0.2em; }
+    .bp .legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+    .bp .legend li { display: flex; align-items: center; gap: 0.5rem; }
+    .bp .sym { width: 22px; height: 22px; color: var(--ink); flex: none; }
+    .bp .sym--tag { width: 16px; height: 16px; vertical-align: -4px; margin-right: 0.3rem; }
+    .bp .sym--host { width: 14px; height: 14px; vertical-align: -3px; margin-right: 0.3rem; color: var(--ink-dim); }
+    .bp .titleblock { border: 1px solid var(--ink); font-family: var(--mono); font-size: 0.72rem; width: min(440px, 100%); background: #fff; animation: bp-draw 600ms ease both; }
     @keyframes bp-draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
     .bp .tb__row { display: grid; grid-template-columns: 80px 1fr; border-bottom: 1px solid var(--ink); }
     .bp .tb__grid { display: grid; grid-template-columns: repeat(4, 1fr); }
@@ -200,48 +328,62 @@ const drawnBy = cv.name.split(" ").map((p) => p[0]).join("").toUpperCase();
     .bp .tb__grid .tb__k { border-right: 0; border-bottom: 1px solid var(--line-faint); }
     .bp .tb__v { padding: 0.3rem 0.5rem; color: var(--ink); letter-spacing: 0.04em; }
 
-    .bp .hero { position: relative; display: grid; grid-template-columns: 240px 200px 1fr; gap: 0; align-items: center; margin-bottom: 5rem; }
-    .bp .hero__wire { width: 200px; height: 300px; stroke: var(--ink); fill: none; stroke-width: 1.2; }
-    .bp .hero__wire circle { fill: var(--accent); stroke: none; }
-    .bp .hero__wire path { stroke-dasharray: 600; stroke-dashoffset: 600; animation: wire 1.4s ease-out 300ms forwards; }
-    @keyframes wire { to { stroke-dashoffset: 0; } }
-    .bp .hero__text { grid-column: 3; order: 3; animation: bp-fade 600ms ease 600ms both; }
-    .bp .hero .node--core { order: 1; }
-    .bp .hero .hero__wire { order: 2; }
-    @keyframes bp-fade { from { opacity: 0; } }
-    .bp .node__photo { position: relative; }
-    .bp .node__photo img { display: block; width: 100%; height: auto; filter: grayscale(1) contrast(1.05); border: 1px solid var(--ink); }
-    .bp .dim { position: absolute; font-family: var(--mono); font-size: 0.6rem; color: var(--ink-dim); }
-    .bp .dim--w { left: 0; right: 0; bottom: -1.2rem; text-align: center; border-top: 1px solid var(--line); padding-top: 2px; }
-    .bp .dim--h { top: 0; bottom: 0; right: -1.5rem; writing-mode: vertical-rl; border-left: 1px solid var(--line); padding-left: 2px; display: flex; align-items: center; }
-    .bp .callout { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); margin: 0 0 0.6rem; letter-spacing: 0.2em; }
-    .bp .name { font-family: var(--narrow); font-weight: 700; font-size: clamp(2.6rem, 6vw, 5rem); line-height: 0.95; text-transform: uppercase; letter-spacing: 0.01em; margin: 0 0 0.6rem; }
-    .bp .role { font-family: var(--mono); color: var(--ink-dim); margin: 0 0 1.25rem; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.85rem; }
-    .bp .summary { max-width: 58ch; margin: 0 0 1.5rem; font-size: 1.02rem; }
-    .bp .legend { display: grid; gap: 0.4rem; font-family: var(--mono); font-size: 0.78rem; }
-    .bp .legend__item { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--ink); text-decoration: none; width: max-content; max-width: 100%; overflow-wrap: anywhere; border-bottom: 1px dashed transparent; }
-    .bp .legend__item:hover { border-bottom-color: var(--accent); color: var(--accent); }
-    .bp a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .bp .sym { width: 14px; height: 14px; border: 1px solid currentColor; flex: none; }
-    .bp .sym--doc { clip-path: polygon(0 0, 70% 0, 100% 30%, 100% 100%, 0 100%); background: var(--accent); border: 0; }
-    .bp .sym--port { border-radius: 50%; position: relative; }
-    .bp .sym--port::after { content: ""; position: absolute; inset: 4px; background: currentColor; border-radius: 50%; }
-
     .bp .seg { margin-bottom: 4rem; position: relative; }
-    .bp .seg__hd { font-family: var(--narrow); font-weight: 700; font-size: 1rem; letter-spacing: 0.18em; margin: 0 0 1.25rem; display: flex; gap: 0.8rem; align-items: center; }
-    .bp .seg__hd .callout { margin: 0; }
-    .bp .bus { height: 1px; background: var(--ink); margin: 0 0 0; position: relative; }
+    .bp .seg__hd { font-family: var(--narrow); font-weight: 700; font-size: 1rem; letter-spacing: 0.18em; margin: 0 0 1.25rem; display: flex; gap: 0.8rem; align-items: baseline; flex-wrap: wrap; }
+    .bp .callout { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); letter-spacing: 0.2em; }
+    .bp .seg__meta { font-family: var(--mono); font-weight: 400; font-size: 0.68rem; letter-spacing: 0.1em; color: var(--ink-dim); margin-left: auto; }
+
+    /* topology map */
+    .bp .map { width: 100%; height: auto; display: block; border: 1px solid var(--ink); background: #fff; font-family: var(--mono); animation: bp-fade 600ms ease both; }
+    @keyframes bp-fade { from { opacity: 0; } }
+    .bp .map__links path { fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: wire 1.6s ease-out 200ms forwards; }
+    .bp .map path.map__link--dash { stroke-dasharray: 4 4; stroke-dashoffset: 0; animation: none; fill: none; stroke: var(--ink-dim); stroke-width: 1.1; }
+    @keyframes wire { to { stroke-dashoffset: 0; } }
+    .bp .map__if text { font-size: 9px; fill: var(--ink-dim); }
+    .bp .map__vlan { font-size: 9px; fill: var(--accent); letter-spacing: 0.1em; }
+    .bp .map__node { color: var(--ink); cursor: pointer; text-decoration: none; }
+    .bp .map__node text { font-size: 10.5px; fill: var(--ink); letter-spacing: 0.06em; }
+    .bp .map__node:hover, .bp .map__node:focus-visible { color: var(--accent); outline: none; }
+    .bp .map__node:hover text, .bp .map__node:focus-visible text { fill: var(--accent); }
+    .bp .map__node--core text { font-weight: 700; }
+
+    /* hero / core */
+    .bp .hero { display: grid; grid-template-columns: 260px 1fr; gap: 3rem; align-items: start; }
+    .bp .node { position: relative; border: 1px solid var(--ink); padding: 1.6rem 1.25rem 1.25rem; background: #fff; }
+    .bp .node--core { padding: 1.6rem 1rem 1rem; }
+    .bp .node__photo img { display: block; width: 100%; height: auto; filter: grayscale(1) contrast(1.05); border: 1px solid var(--ink); }
+    .bp .node__ports { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem 0.8rem; margin: 0.9rem 0 0; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.05em; }
+    .bp .node__ports dt { color: var(--accent); } .bp .node__ports dd { margin: 0; color: var(--ink-dim); }
+    .bp .name { font-family: var(--narrow); font-weight: 700; font-size: clamp(2.6rem, 6vw, 4.8rem); line-height: 0.95; text-transform: uppercase; letter-spacing: 0.01em; margin: 0 0 0.6rem; }
+    .bp .role { font-family: var(--mono); color: var(--ink-dim); margin: 0 0 1.25rem; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.85rem; }
+    .bp .summary { max-width: 62ch; margin: 0 0 1.75rem; font-size: 1.02rem; }
+    .bp .ifb__hd { font-family: var(--mono); font-weight: 400; font-size: 0.72rem; letter-spacing: 0.1em; color: var(--ink-dim); margin: 0 0 0.4rem; }
+    .bp .ifb__hd::before { content: "CORE-RTR-01# "; color: var(--accent); }
+    .bp .ifb { width: 100%; border-collapse: collapse; border: 1px solid var(--ink); background: #fff; font-size: 0.85rem; }
+    .bp .ifb th { font-family: var(--mono); font-weight: 400; font-size: 0.62rem; letter-spacing: 0.15em; text-align: left; padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--ink); color: var(--accent); text-transform: uppercase; }
+    .bp .ifb td { padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--line-faint); vertical-align: top; overflow-wrap: anywhere; }
+    .bp .ifb tr:last-child td { border-bottom: 0; }
+    .bp .mono { font-family: var(--mono); font-size: 0.78rem; white-space: nowrap; }
+    .bp .up { font-family: var(--mono); font-size: 0.78rem; color: var(--ok); white-space: nowrap; }
+    .bp a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+    .bp a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+    .bp a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* buses and nodes */
+    .bp .bus { height: 1px; background: var(--ink); position: relative; }
+    .bp .bus--dash { background: repeating-linear-gradient(90deg, var(--ink) 0 5px, transparent 5px 10px); }
     .bp .bus::before, .bp .bus::after { content: ""; position: absolute; top: -3px; width: 7px; height: 7px; background: var(--accent); }
     .bp .bus::before { left: 0; } .bp .bus::after { right: 0; }
-    .bp .nodes { display: grid; gap: 2rem; padding-top: 2rem; }
-    .bp .nodes--1 { grid-template-columns: 1fr; } .bp .nodes--2 { grid-template-columns: repeat(2, 1fr); } .bp .nodes--3 { grid-template-columns: repeat(3, 1fr); }
-    .bp .node { position: relative; border: 1px solid var(--ink); padding: 1.6rem 1.25rem 1.25rem; background: #fff; }
-    .bp .nodes .node::before { content: ""; position: absolute; left: 50%; top: -2rem; height: 2rem; width: 1px; background: var(--ink); }
-    .bp .nodes .node::after { content: ""; position: absolute; left: calc(50% - 3px); top: -3px; width: 6px; height: 6px; background: var(--blue); border: 1px solid var(--ink); border-radius: 50%; }
-    .bp .node--core { padding: 1.6rem 1rem 2.2rem; width: 240px; }
-    .bp .node__tag { position: absolute; top: -0.65rem; left: 0.9rem; padding: 0 0.4rem; background: var(--blue); font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em; color: var(--accent); }
+    .bp .bus__lbl { position: absolute; top: -1.1rem; left: 1rem; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; color: var(--ink-dim); background: var(--paper); padding: 0 0.3rem; }
+    .bp .nodes { display: grid; gap: 2rem; padding-top: 2.25rem; }
+    .bp .nodes--1 { grid-template-columns: 1fr; } .bp .nodes--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .bp .nodes--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .bp .nodes .node::before { content: ""; position: absolute; left: 50%; top: -2.25rem; height: 2.25rem; width: 1px; background: var(--ink); }
+    .bp .nodes .node::after { content: ""; position: absolute; left: calc(50% - 3px); top: -3px; width: 6px; height: 6px; background: var(--paper); border: 1px solid var(--ink); border-radius: 50%; }
+    .bp .node__if { position: absolute; left: calc(50% + 6px); top: -1.6rem; font-family: var(--mono); font-size: 0.6rem; color: var(--ink-dim); letter-spacing: 0.06em; }
+    .bp .node__tag { position: absolute; top: -0.7rem; left: 0.9rem; padding: 0 0.4rem; background: #fff; border: 1px solid var(--ink); font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em; color: var(--accent); display: inline-flex; align-items: center; }
+    .bp .node__time { display: block; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--ink-dim); margin: 0 0 0.4rem; }
     .bp .node__title { font-family: var(--narrow); font-weight: 700; font-size: 1.2rem; margin: 0 0 0.2rem; text-transform: uppercase; letter-spacing: 0.02em; }
-    .bp .node__title a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--accent); } .bp .node__title a:hover { color: var(--accent); }
+    .bp .node__title a { color: inherit; text-decoration-color: var(--accent); }
     .bp .node__sub { margin: 0 0 0.8rem; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-dim); letter-spacing: 0.06em; }
     .bp .node__desc { margin: 0 0 0.8rem; font-size: 0.92rem; }
     .bp .node__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; font-size: 0.88rem; color: var(--ink-dim); }
@@ -252,30 +394,35 @@ const drawnBy = cv.name.split(" ").map((p) => p[0]).join("").toUpperCase();
     .bp .badge:hover img { filter: none; }
     .bp .two { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
 
+    /* vlan database */
     .bp .bom { width: 100%; border-collapse: collapse; font-size: 0.88rem; border: 1px solid var(--ink); background: #fff; }
-    .bp .bom th { font-family: var(--mono); font-weight: 400; font-size: 0.65rem; letter-spacing: 0.15em; text-align: left; padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--ink); color: var(--accent); background: #fff; }
+    .bp .bom th { font-family: var(--mono); font-weight: 400; font-size: 0.65rem; letter-spacing: 0.15em; text-align: left; padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--ink); color: var(--accent); text-transform: uppercase; }
     .bp .bom td { padding: 0.65rem 0.8rem; border-bottom: 1px solid var(--line-faint); vertical-align: top; }
     .bp .bom td, .bp .bom th { border-right: 1px solid var(--line-faint); } .bp .bom td:last-child, .bp .bom th:last-child { border-right: 0; }
-    .bp .bom__n { font-family: var(--mono); color: var(--ink-dim); width: 1%; white-space: nowrap; }
+    .bp .bom__n { font-family: var(--mono); color: var(--ink-dim); width: 1%; white-space: nowrap; font-size: 0.8rem; }
     .bp .bom__cat { font-family: var(--narrow); font-weight: 700; text-transform: uppercase; white-space: nowrap; }
-    .bp .bom tbody tr:hover { background: rgba(200,70,27,0.06); }
+    .bp .bom tbody tr:hover { background: rgba(200,70,27,0.05); }
+    .bp .hosts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; }
+    .bp .hosts li { display: inline-flex; align-items: center; font-size: 0.85rem; }
     .bp .notes { font-family: var(--mono); font-size: 0.65rem; color: var(--ink-dim); letter-spacing: 0.06em; border-top: 1px solid var(--line); padding-top: 0.75rem; }
 
     @media (max-width: 1000px) {
       .bp .sheet { padding: 2rem 1.5rem 7rem; }
-      .bp .hero { grid-template-columns: 1fr; gap: 2rem; }
-      .bp .hero__wire { display: none; }
-      .bp .hero__text { grid-column: 1; }
+      .bp .tb-row { flex-direction: column; }
+      .bp .hero { grid-template-columns: 1fr; gap: 2.5rem; }
+      .bp .node--core { max-width: 300px; }
       .bp .nodes--2, .bp .nodes--3, .bp .two { grid-template-columns: 1fr; }
       .bp .two { gap: 4rem; }
+      .bp .seg__meta { margin-left: 0; flex-basis: 100%; }
     }
     @media (max-width: 640px) {
-      .bp .dim--h { display: none; }
-      .bp .bom td:last-child { font-size: 0.8rem; }
+      .bp .map { display: none; } /* too dense for phones; the sections carry the same labels */
+      .bp .bom__cat { white-space: normal; }
+      .bp .ifb th:nth-child(n+3), .bp .ifb td:nth-child(n+3) { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .bp .titleblock, .bp .hero__text { animation: none; }
-      .bp .hero__wire path { animation: none; stroke-dashoffset: 0; }
+      .bp .titleblock, .bp .map { animation: none; }
+      .bp .map__links path { animation: none; stroke-dashoffset: 0; }
     }
   </style>
 </StyleShell>
