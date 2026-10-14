@@ -216,7 +216,7 @@ const frames: { title: string; rows: Frame[] }[] = [
     .pcap .pane__count { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
 
     .pcap .tbl { font-family: var(--mono); font-size: 0.8rem; }
-    .pcap .tr { display: grid; grid-template-columns: 52px 72px 1.1fr 1fr 64px 1.6fr; gap: 0.75rem; align-items: center; padding: 0.5rem 1rem; }
+    .pcap .tr { display: grid; grid-template-columns: 52px 72px 1.1fr 1fr 64px 1.6fr; gap: 0.75rem; align-items: start; padding: 0.5rem 1rem; }
     .pcap .tr--head { font-size: 0.7rem; color: var(--muted); border-bottom: 1px solid var(--line); background: #fafbfc; }
     .pcap .frame summary { list-style: none; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); transition: filter 100ms; }
     .pcap .frame summary::-webkit-details-marker { display: none; }
@@ -225,7 +225,8 @@ const frames: { title: string; rows: Frame[] }[] = [
     .pcap .frame[open] summary a { color: #fff; }
     .pcap .frame--tcp summary { background: var(--tcp); } .pcap .frame--tls summary { background: var(--tls); } .pcap .frame--http summary { background: var(--http); }
     .pcap .frame--dns summary { background: var(--dns); } .pcap .frame--arp summary { background: var(--arp); } .pcap .frame--icmp summary { background: var(--icmp); }
-    .pcap .td { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pcap .td { min-width: 0; overflow-wrap: anywhere; }
+    .pcap .td--no, .pcap .td--proto, .pcap .td--len { white-space: nowrap; }
     .pcap .td--no { color: var(--muted); }
     .pcap .frame[open] .td--no { color: inherit; }
     .pcap .td--info { font-family: var(--sans); font-weight: 600; }
