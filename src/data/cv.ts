@@ -16,7 +16,7 @@ export interface Experience {
 export interface Project {
   readonly name: string;
   readonly year: string;
-  readonly description: string;
+  readonly description?: string;
   readonly highlights?: readonly string[];
   readonly stack: readonly string[];
   readonly url?: string;

@@ -128,8 +128,8 @@ const personLd = {
         </header>
 
         <section class="bio">
-          <div class="network-tag">PACKET_INSPECTION</div>
-          <p>{cv.summary}</p>
+          <div class="network-tag">PACKET_INSPECTION <span class="network-tag__alias">// about me</span></div>
+          <p class="bio__text">{cv.summary}</p>
           <div class="dossier-bar">
             <a href={`${import.meta.env.BASE_URL}/resume.pdf`.replace(/\/+/g, "/")} target="_blank" rel="noopener" class="dossier-btn">
               <span class="dossier-btn__bracket">[</span>
@@ -141,25 +141,37 @@ const personLd = {
         </section>
       </div>
 
+      <nav class="route-table" aria-label="Jump to a section">
+        <span class="route-table__label">ROUTE_TABLE <span class="route-table__hint">// jump to</span></span>
+        <a href="#uplink" title="Contact">UPLINK_PROTOCOL</a>
+        <a href="#hops" title="Work experience">HOP_HISTORY</a>
+        <a href="#missions" title="Projects">MISSION_LOG</a>
+        <a href="#training" title="Education">TRAINING_DATA</a>
+        <a href="#creds" title="Certifications">CRED_CHAIN</a>
+        <a href="#stack" title="Skills">SECURITY_STACK</a>
+      </nav>
+
       <div class="content-sections">
-        <section class="contact contact--banner">
+        <section class="contact contact--banner" id="uplink">
           <div class="header-with-shape">
             <div class="mini-triangle"></div>
             <h2>UPLINK_PROTOCOL</h2>
+            <span class="h2-alias" aria-hidden="true">// contact</span>
           </div>
           <div class="contact-links">
             {
               cv.contact.map((c) => (
-                <a href={c.href}>{c.label.toUpperCase()}_{c.value}</a>
+                <a href={c.href}><span class="contact-key">{c.label.toUpperCase()}_</span>{c.value}</a>
               ))
             }
           </div>
         </section>
 
-        <section class="experience">
+        <section class="experience" id="hops">
           <div class="header-with-shape">
             <div class="mini-square"></div>
             <h2>HOP_HISTORY</h2>
+            <span class="h2-alias" aria-hidden="true">// work experience</span>
           </div>
           <div class="exp-grid">
             {
@@ -182,10 +194,11 @@ const personLd = {
           </div>
         </section>
 
-        <section class="experience">
+        <section class="experience" id="missions">
           <div class="header-with-shape">
             <div class="mini-square"></div>
             <h2>MISSION_LOG</h2>
+            <span class="h2-alias" aria-hidden="true">// projects</span>
           </div>
           <div class="exp-grid">
             {
@@ -209,10 +222,11 @@ const personLd = {
         </section>
 
         <div class="edu-cert-split">
-          <section class="experience">
+          <section class="experience" id="training">
             <div class="header-with-shape">
               <div class="mini-square"></div>
               <h2>TRAINING_DATA</h2>
+            <span class="h2-alias" aria-hidden="true">// education</span>
             </div>
             <div class="edu-list">
               {
@@ -228,10 +242,11 @@ const personLd = {
             </div>
           </section>
 
-          <section class="experience">
+          <section class="experience" id="creds">
             <div class="header-with-shape">
               <div class="mini-square"></div>
               <h2>CRED_CHAIN</h2>
+            <span class="h2-alias" aria-hidden="true">// certifications</span>
             </div>
             <div class="edu-list">
               {
@@ -276,10 +291,11 @@ const personLd = {
           </section>
         </div>
 
-        <section class="skills">
+        <section class="skills" id="stack">
           <div class="header-with-shape">
             <div class="mini-circle"></div>
             <h2>SECURITY_STACK</h2>
+            <span class="h2-alias" aria-hidden="true">// skills</span>
           </div>
           <div class="skill-groups">
             {
@@ -338,6 +354,8 @@ const personLd = {
         --accent-line-strong: rgba(67, 56, 202, 0.1);
         --accent-line-faint: rgba(67, 56, 202, 0.05);
         --accent-tint: rgba(67, 56, 202, 0.05);
+        --muted: #4b4b55;
+        --muted-2: #6e6e78;
         background-color: var(--bg);
         color: var(--text);
         font-family: "Space Grotesk", sans-serif;
@@ -356,6 +374,8 @@ const personLd = {
         --accent-line-strong: rgba(139, 128, 255, 0.18);
         --accent-line-faint: rgba(139, 128, 255, 0.08);
         --accent-tint: rgba(139, 128, 255, 0.1);
+        --muted: #b9b9c6;
+        --muted-2: #8e8e9c;
       }
 
       .v3 .net-line--strong { stroke: var(--accent-line-strong); }
@@ -505,11 +525,66 @@ const personLd = {
 
       .v3 .top-layout {
         display: grid;
-        grid-template-columns: 200px minmax(0, 1.2fr) minmax(0, 1.5fr);
-        gap: 3rem;
-        margin-bottom: 8rem;
+        grid-template-columns: 200px minmax(0, 1fr);
+        gap: 2.5rem 3.5rem;
+        margin-bottom: 4rem;
         align-items: start;
       }
+      .v3 .top-layout > .portrait { grid-row: 1 / span 2; }
+      .v3 .top-layout > header { grid-column: 2; }
+      .v3 .top-layout > .bio { grid-column: 2; }
+
+      .v3 .route-table {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem 0.6rem;
+        padding: 0.9rem 0;
+        margin-bottom: 5rem;
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+      }
+      .v3 .route-table__label { flex-basis: 100%; color: var(--accent); font-weight: 700; margin-bottom: 0.2rem; }
+      .v3 .route-table__hint { color: var(--muted-2); font-weight: 400; letter-spacing: 0.06em; }
+      .v3 .route-table a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.7rem;
+        color: var(--text);
+        text-decoration: none;
+        border: 1px solid var(--rule);
+        border-radius: 999px;
+        transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+      }
+      .v3 .route-table a::before {
+        content: "↓";
+        color: var(--accent);
+        font-size: 0.75rem;
+        transition: transform 0.15s ease;
+      }
+      .v3 .route-table a:hover,
+      .v3 .route-table a:focus-visible {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: var(--accent-tint);
+      }
+      .v3 .route-table a:hover::before { transform: translateY(2px); }
+
+      .v3 .h2-alias,
+      .v3 .network-tag__alias {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+        text-transform: lowercase;
+        color: var(--muted);
+      }
+      .v3 .network-tag__alias { color: rgba(255, 255, 255, 0.75); margin-left: 0.25rem; }
+      .v3 [id] { scroll-margin-top: 2rem; }
 
       .v3 .portrait {
         display: flex;
@@ -551,19 +626,20 @@ const personLd = {
       }
 
       .v3 .tagline {
-        font-size: 1.1rem;
-        font-weight: 300;
+        font-size: 0.95rem;
+        font-weight: 400;
         text-transform: uppercase;
         letter-spacing: 0.2em;
-        opacity: 0.6;
+        color: var(--muted);
         font-family: var(--mono);
         margin: 0;
       }
 
       .v3 .bio p {
-        font-size: 1.15rem;
-        line-height: 1.55;
-        font-weight: 300;
+        font-size: 1.1rem;
+        line-height: 1.65;
+        font-weight: 400;
+        max-width: 68ch;
         border-left: 2px solid var(--accent);
         padding-left: 1.5rem;
         margin: 0;
@@ -573,7 +649,7 @@ const personLd = {
         display: flex;
         align-items: center;
         gap: 1rem;
-        margin-bottom: 4rem;
+        margin-bottom: 2.5rem;
       }
 
       .v3 h2 {
@@ -604,13 +680,13 @@ const personLd = {
       }
 
       .v3 .experience {
-        margin-bottom: 8rem;
+        margin-bottom: 6rem;
       }
 
       .v3 .exp-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 4rem;
+        gap: 3rem 3.5rem;
       }
 
       .v3 .exp-card {
@@ -631,6 +707,7 @@ const personLd = {
       .v3 .exp-card h3 {
         font-size: 1.3rem;
         font-weight: 700;
+        line-height: 1.25;
         margin: 0 0 0.5rem;
       }
 
@@ -646,19 +723,20 @@ const personLd = {
       }
 
       .v3 .company {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
         font-weight: 700;
         text-transform: uppercase;
-        margin: 0 0 1.5rem;
-        opacity: 0.65;
+        letter-spacing: 0.04em;
+        margin: 0 0 1.1rem;
+        color: var(--muted);
         font-family: var(--mono);
       }
 
       .v3 .desc {
-        font-size: 0.95rem;
-        line-height: 1.6;
-        font-weight: 300;
-        opacity: 0.8;
+        font-size: 0.98rem;
+        line-height: 1.65;
+        font-weight: 400;
+        max-width: 68ch;
         margin: 0;
       }
 
@@ -683,10 +761,11 @@ const personLd = {
       }
 
       .v3 .hl-list li {
-        font-size: 0.9rem;
-        line-height: 1.55;
-        font-weight: 300;
-        opacity: 0.75;
+        font-size: 0.93rem;
+        line-height: 1.6;
+        font-weight: 400;
+        color: var(--muted);
+        max-width: 68ch;
         padding-left: 1.2rem;
         position: relative;
       }
@@ -740,8 +819,9 @@ const personLd = {
       }
 
       .v3 .contact--banner {
-        margin-bottom: 8rem;
+        margin-bottom: 6rem;
       }
+      .v3 .contact-key { color: var(--accent); }
       .v3 .contact--banner .contact-links {
         flex-direction: row;
         flex-wrap: wrap;
@@ -752,7 +832,7 @@ const personLd = {
         display: grid;
         grid-template-columns: 1.3fr 1fr;
         gap: 4rem;
-        margin-bottom: 8rem;
+        margin-bottom: 6rem;
       }
       .v3 .edu-cert-split > .experience {
         margin-bottom: 0;
@@ -774,8 +854,8 @@ const personLd = {
 
       .v3 .skill-groups {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 3rem 4rem;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2.5rem 3rem;
       }
       .v3 .skill-group__heading {
         font-family: var(--mono);
@@ -791,6 +871,7 @@ const personLd = {
       }
       .v3 .skill-group .skill-item {
         font-size: 0.95rem;
+        font-weight: 500;
       }
 
       @media (max-width: 800px) {
@@ -829,7 +910,7 @@ const personLd = {
       }
 
       .v3 .contact-links a {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 700;
         color: var(--text);
         text-decoration: none;
@@ -837,7 +918,7 @@ const personLd = {
         width: fit-content;
         transition: all 0.2s;
         font-family: var(--mono);
-        word-break: break-all;
+        overflow-wrap: anywhere;
       }
 
       .v3 .contact-links a:hover {
@@ -859,6 +940,14 @@ const personLd = {
         }
         .v3 .portrait {
           max-width: 240px;
+        }
+        .v3 .top-layout > .portrait { grid-row: auto; }
+        .v3 .top-layout > header,
+        .v3 .top-layout > .bio {
+          grid-column: 1;
+        }
+        .v3 .route-table {
+          margin-bottom: 4rem;
         }
         .v3 main {
           padding: 4rem 2rem 6rem;
