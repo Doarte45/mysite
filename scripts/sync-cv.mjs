@@ -119,12 +119,13 @@ async function main() {
     const note = phonesInDoc.length ? " (contains a phone number: ALLOW_PHONE_IN_PDF=1)" : "";
     console.log(`✓ Wrote ${RESUME_PDF_PATH}${note}`);
   } else {
-    console.warn(
-      `\n⚠ Skipped ${RESUME_PDF_PATH}: the Google Doc contains ${phonesInDoc.length} phone number(s), ` +
-        "which would be published inside the PDF. Remove the number from the Doc and re-run, " +
-        "or set ALLOW_PHONE_IN_PDF=1 to publish it anyway. The previous resume.pdf was left unchanged.",
+    // Expected workflow: the Doc keeps the phone number and resume.pdf is exported by hand
+    // without it, so this is a notice, not a failure (build:fresh keeps working).
+    console.log(
+      `ℹ Kept the existing ${RESUME_PDF_PATH}: the Google Doc contains a phone number, ` +
+        "so its PDF export wasn't saved. Export a phone-free PDF by hand when the CV changes " +
+        "(or set ALLOW_PHONE_IN_PDF=1 to save the Doc's export as-is).",
     );
-    process.exitCode = 2;
   }
 }
 
