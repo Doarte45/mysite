@@ -1,8 +1,15 @@
 {
   "name": "Andrés Duarte Ornelas",
   "role": "Cybersecurity Professional",
-  "tagline": "Cybersecurity professional with hands-on experience in network security architecture, vulnerability assessment, and incident response",
+  "tagline": "Cybersecurity professional with a background in network security architecture, vulnerability assessment, and incident response.",
   "location": "Chihuahua, MX (Open to relocation - Monterrey)",
+  "relocation": "Monterrey",
+  "availability": "Full-time",
+  "targetRoles": [
+    "SOC Analyst",
+    "Network Security",
+    "IT Support"
+  ],
   "contact": [
     {
       "label": "Location",
@@ -12,7 +19,7 @@
     {
       "label": "LinkedIn",
       "value": "linkedin.com/in/andrés-d-950430240",
-      "href": "http://linkedin.com/in/andr%C3%A9s-d-950430240"
+      "href": "https://linkedin.com/in/andr%C3%A9s-d-950430240"
     },
     {
       "label": "Email",
@@ -20,7 +27,7 @@
       "href": "mailto:andresdornelas@gmail.com"
     }
   ],
-  "summary": "Cybersecurity professional fully available for full-time roles. Completed UTSA in-person residency May 2026; currently finishing Tecnológico de Monterrey's cybersecurity master's program part-time/online (expected Dec 2026), which does not require full-time student status. Background in network security architecture, vulnerability assessment, and incident response, with hands-on experience in network simulation and fault diagnosis. Seeking SOC Analyst, Network Security, or IT Support roles.",
+  "summary": "Cybersecurity professional fully available for full-time roles. Completed UTSA in-person residency May 2026; currently finishing Tecnológico de Monterrey's cybersecurity master's part-time/online (expected Dec 2026), which does not require full-time student status. Background in network security architecture, vulnerability assessment, and incident response, with hands-on experience in network simulation and fault diagnosis. Seeking SOC Analyst, Network Security, or IT Support roles.",
   "experience": [
     {
       "role": "Cybersecurity Trainee",
@@ -53,8 +60,8 @@
     {
       "name": "Empirical Characterization of a Commercial Coding Agent for CLI-Based OSPF Fault Diagnosis",
       "year": "January 2026 – May 2026",
+      "description": "Conducted the first empirical evaluation of a general-purpose coding agent (Claude Code) performing autonomous OSPF fault diagnosis in a traditional, non-SDN CLI environment, addressing a gap in existing LLM network operations research.",
       "highlights": [
-        "Conducted the first empirical evaluation of a general-purpose coding agent (Claude Code) performing autonomous OSPF fault diagnosis in a traditional, non-SDN CLI environment, addressing a gap in existing LLM network operations research.",
         "Designed a 50-session quantitative experiment using a three-router GNS3/VyOS topology modeled after CCNA 11.6.3, with six simultaneously active faults per session and automated pre/post verification via Netmiko snapshots",
         "Achieved an effective fault resolution rate of ~97% and a perfect-run rate of ~78% at a mean cost of $0.81/session; zero sessions introduced a configuration regression",
         "Publicly released experimental materials, router configurations, and analysis scripts at github.com/Doarte45/LLMnetopsLab"
@@ -65,13 +72,32 @@
         "VyOS",
         "Netmiko"
       ],
-      "url": "https://github.com/Doarte45/LLMnetopsLab"
+      "url": "https://github.com/Doarte45/LLMnetopsLab",
+      "featured": true,
+      "metrics": [
+        {
+          "value": "~97%",
+          "label": "Effective fault resolution rate"
+        },
+        {
+          "value": "~78%",
+          "label": "Perfect-run rate"
+        },
+        {
+          "value": "$0.81",
+          "label": "Mean cost per session"
+        },
+        {
+          "value": "50",
+          "label": "Sessions run"
+        }
+      ]
     },
     {
       "name": "Cloud as a Service Commercial and Operative Design",
       "year": "August 2023 – October 2023",
+      "description": "Designed multi-cloud service architecture using AWS, Azure, and Google Cloud for company Quanti.",
       "highlights": [
-        "Designed multi-cloud service architecture using AWS, Azure, and Google Cloud for company Quanti.",
         "Developed commercial strategy for service delivery and operational framework"
       ],
       "stack": [
@@ -81,10 +107,10 @@
       ]
     },
     {
-      "name": "Digital Forensic Investigation: \"Posthumous Digital Note\" Case Analysis",
+      "name": "Digital Forensic Investigation: “Posthumous Digital Note” Case Analysis",
       "year": "August 2025",
+      "description": "Collaborated on comprehensive digital forensic analysis of suspicious death case using industry-standard tools (Autopsy/Sleuth Kit, Volatility, Registry Explorer).",
       "highlights": [
-        "Collaborated on comprehensive digital forensic analysis of suspicious death case using industry-standard tools (Autopsy/Sleuth Kit, Volatility, Registry Explorer).",
         "Analyzed disk images, RAM dumps, and Windows event logs to reconstruct timeline and establish evidence of third-party involvement",
         "Documented complete chain of custody following ISO/IEC 27037 and NIST SP 800-86 standards"
       ],
@@ -100,9 +126,9 @@
       "heading": "Cybersecurity",
       "items": [
         "Network security architecture",
-        "vulnerability assessment",
-        "incident response",
-        "security policy development",
+        "Vulnerability assessment",
+        "Incident response",
+        "Security policy development",
         "VLAN segmentation",
         "DMZ configuration"
       ]
@@ -176,14 +202,12 @@
     {
       "degree": "Master's in Cybersecurity – Online, part-time",
       "institution": "Monterrey Institute of Technology (ITESM)",
-      "period": "September 2024 – Expected: December 2026",
-      "detail": ""
+      "period": "September 2024 – Expected: December 2026"
     },
     {
       "degree": "Bachelor of Science in Electronics Engineering, Specialization in Cybersecurity",
       "institution": "Monterrey Institute of Technology (ITESM)",
-      "period": "August 2020 – June 2024",
-      "detail": ""
+      "period": "August 2020 – June 2024"
     }
   ],
   "certifications": [
@@ -191,13 +215,13 @@
       "name": "Cisco CyberOps Associate Certification",
       "issuer": "Cisco Networking Academy",
       "date": "November 2023",
-      "detail": "Demonstrated comprehensive understanding of Security Operations including intrusion detection, analysis, and network monitoring. Completed 52 hands-on labs (30+ hours) using Security Onion, ELK Stack, and Cisco Packet Tracer"
+      "detail": "Demonstrated comprehensive understanding of Security Operations including intrusion detection, analysis, and network monitoring. Completed 52 hands-on labs (30+ hours) using Security Onion, ELK Stack, and Cisco Packet Tracer."
     },
     {
       "name": "AWS Certified AI Practitioner",
       "issuer": "Amazon Web Services (AWS)",
       "date": "July 2026",
-      "detail": "Validated foundational knowledge of AI, ML, and generative AI concepts, including model types, use case selection, and responsible AI practices. Demonstrated proficiency with AWS AI/ML services (Amazon Bedrock, SageMaker, Amazon Q) and prompt engineering techniques for foundation models",
+      "detail": "Validated foundational knowledge of AI, ML, and generative AI concepts, including model types, use case selection, and responsible AI practices. Demonstrated proficiency with AWS AI/ML services (Amazon Bedrock, SageMaker, Amazon Q) and prompt engineering techniques for foundation models.",
       "badgeId": "4b1a8158-6e26-460f-9842-ac1a5b416002",
       "badgeImage": "https://images.credly.com/images/4d4693bb-530e-4bca-9327-de07f3aa2348/image.png"
     }

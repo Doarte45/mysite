@@ -1,15 +1,9 @@
 ---
 import { Image } from "astro:assets";
 import BaseHead from "../layouts/BaseHead.astro";
-import CompareBar from "./CompareBar.astro";
 import { cv, type Education } from "../data/cv.ts";
 import mePhoto from "../assets/me.jpg";
 
-export interface Props {
-  /** Show the before/after design switcher (comparison route only). */
-  compare?: boolean;
-}
-const { compare = false } = Astro.props;
 
 const nameParts = cv.name.split(" ");
 const firstName = nameParts[0] ?? cv.name;
@@ -130,7 +124,6 @@ const periodParts = (p: string) => p.split(/\s+[–—-]\s+/);
 <html lang="en">
   <head>
     <BaseHead title={`${cv.name} — Cybersecurity Engineer`} description={`${cv.name}, ${cv.role}. ${cv.tagline}`} />
-    {compare && <meta name="robots" content="noindex" />}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -148,7 +141,7 @@ const periodParts = (p: string) => p.split(/\s+[–—-]\s+/);
       })();
     </script>
   </head>
-  <body class:list={["v3", { "has-compare": compare }]}>
+  <body class="v3">
     <a class="skip-link" href="#main">Skip to content</a>
 
     <div class="network-lines" aria-hidden="true">
@@ -267,7 +260,7 @@ const periodParts = (p: string) => p.split(/\s+[–—-]\s+/);
         <dl class="facts">
           {location && (<div class="fact"><dt>LOCATION_</dt><dd>{location.value}</dd></div>)}
           {relocation && (<div class="fact"><dt>RELOCATION_</dt><dd>Open to {relocation}</dd></div>)}
-          {availability && (<div class="fact"><dt>START_</dt><dd>{availability}</dd></div>)}
+          {availability && (<div class="fact"><dt>AVAILABILITY_</dt><dd>{availability}</dd></div>)}
           {languages && (<div class="fact"><dt>LANGUAGES_</dt><dd>{languages.items.join(" · ")}</dd></div>)}
         </dl>
       </section>
@@ -502,7 +495,6 @@ const periodParts = (p: string) => p.split(/\s+[–—-]\s+/);
       <a href="#top">RETURN_TO_ORIGIN ↑</a>
     </footer>
 
-    {compare && <CompareBar current="after" />}
 
     <script>
       const root = document.documentElement;
@@ -600,7 +592,6 @@ const periodParts = (p: string) => p.split(/\s+[–—-]\s+/);
         --net-strong: rgba(139, 128, 255, 0.18);
         --net-faint: rgba(139, 128, 255, 0.08);
       }
-      body.v3.has-compare { padding-bottom: 72px; }
       .v3 *, .v3 *::before, .v3 *::after { box-sizing: border-box; }
       .v3 ::selection { background: var(--accent); color: var(--accent-ink); }
       .v3 a:focus-visible, .v3 button:focus-visible, .v3 summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
