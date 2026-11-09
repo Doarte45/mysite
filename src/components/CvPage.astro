@@ -12,7 +12,7 @@ export interface Props {
 const { compare = false } = Astro.props;
 
 const nameParts = cv.name.split(" ");
-const firstName = nameParts[0];
+const firstName = nameParts[0] ?? cv.name;
 const lastName = nameParts.slice(1).join(" ");
 
 const base = import.meta.env.BASE_URL;
@@ -49,15 +49,19 @@ const sections = [
 const sec = Object.fromEntries(sections.map((s) => [s.id, s])) as Record<(typeof sections)[number]["id"], (typeof sections)[number]>;
 
 // Summary → hero "open to" roles + an About block that doesn't repeat the hero.
-const sentences = cv.summary.match(/[^.!?]+(?:[.!?](?=\s|$))+/g)?.map((t) => t.trim()) ?? [cv.summary];
+const sentences = (cv.summary.match(/[^.!?]+(?:[.!?](?=\s|$))+/g)?.map((t) => t.trim()) ?? [cv.summary]).filter(Boolean);
 const seekingSentence = sentences.find((t) => /^seeking\b/i.test(t));
-const targetRoles =
+// cv.json written by the current sync-cv always carries targetRoles; older files don't.
+// When present, trust the extracted site fields; otherwise fall back to parsing the prose.
+const synced = cv.targetRoles !== undefined;
+const parsedRoles =
   seekingSentence
     ?.replace(/^seeking\s+/i, "")
     .replace(/\s+roles?\.?$/i, "")
     .split(/,\s*(?:or\s+|and\s+)?|\s+or\s+/)
     .map((r) => r.trim())
     .filter(Boolean) ?? [];
+const targetRoles = synced ? [...(cv.targetRoles ?? [])] : parsedRoles;
 const aboutSentences = sentences.filter((t, i) => t !== seekingSentence && !(i === 0 && /available/i.test(t)));
 
 const escapeHtml = (t: string) =>
@@ -70,11 +74,11 @@ const extractStats = (lines: readonly string[] = []) => {
   const out: { value: string; label: string }[] = [];
   for (const l of lines) {
     for (const m of l.matchAll(/\b([a-z][a-z -]{2,60}?)\s+of\s+(~?\$?\d[\d.]*%?)(\/[a-z]+)?/gi)) {
-      const label = (m[1] + (m[3] ? ` per ${m[3].slice(1)}` : "")).replace(/^((achieved|an?|and|at|the|with)\s+)+/i, "");
-      out.push({ value: m[2], label: label.charAt(0).toUpperCase() + label.slice(1) });
+      const label = ((m[1] ?? "") + (m[3] ? ` per ${m[3].slice(1)}` : "")).replace(/^((achieved|an?|and|at|the|with)\s+)+/i, "");
+      out.push({ value: m[2] ?? "", label: label.charAt(0).toUpperCase() + label.slice(1) });
     }
     const n = l.match(/\b(\d+)-session\b/i);
-    if (n) out.push({ value: n[1], label: "Sessions run" });
+    if (n?.[1]) out.push({ value: n[1], label: "Sessions run" });
   }
   return out.slice(0, 4);
 };
@@ -93,7 +97,7 @@ const credentials = [
 const LEVEL = /^(.*?)\s*\((basic|intermediate|advanced|native|fluent)\)$/i;
 const splitLevel = (item: string) => {
   const m = item.match(LEVEL);
-  const name = (m ? m[1] : item).trim();
+  const name = ((m ? m[1] : item) ?? item).trim();
   return { name: name.charAt(0).toUpperCase() + name.slice(1), level: m?.[2]?.toLowerCase() };
 };
 
@@ -101,11 +105,26 @@ const eduGroups = [
   ...cv.education.reduce((m, e) => m.set(e.institution, [...(m.get(e.institution) ?? []), e]), new Map<string, Education[]>()),
 ];
 
-const relocation = cv.location.match(/relocation\s*[-–:]\s*([^)]+)/i)?.[1]?.trim();
+const relocation = synced ? cv.relocation : cv.location.match(/relocation\s*[-–—:]\s*([^)]+)/i)?.[1]?.trim();
+// Old cv.json files predate the availability field; keep the previous wording for them.
+const availability = synced ? cv.availability : "Immediately · full-time";
+
+// Featured project: the one sync-cv flagged; for older files, the first project.
+const featuredIndex = synced ? cv.projects.findIndex((p) => p.featured) : cv.projects.length ? 0 : -1;
+const orderedProjects = [...cv.projects].sort((a, b) => Number(b === cv.projects[featuredIndex]) - Number(a === cv.projects[featuredIndex]));
+const projectStats = (p: (typeof cv.projects)[number]) => (synced ? [...(p.metrics ?? [])] : extractStats(p.highlights));
 const githubUser = cv.projects.map((pr) => pr.url?.match(/github\.com\/([^/]+)/i)?.[1]).find(Boolean);
 const projectHref = (url: string) => (url.startsWith("http") ? url : `https://${url}`);
 const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
-const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
+const has: Record<(typeof sections)[number]["id"], boolean> = {
+  hops: cv.experience.length > 0,
+  missions: cv.projects.length > 0,
+  creds: cv.certifications.length > 0,
+  training: cv.education.length > 0,
+  stack: techSkills.length > 0,
+  uplink: true,
+};
+const periodParts = (p: string) => p.split(/\s+[–—-]\s+/);
 ---
 
 <html lang="en">
@@ -146,7 +165,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
           <span class="brand__prompt">~/</span>{firstName.toLowerCase()}<span class="brand__cursor" aria-hidden="true"></span>
         </a>
         <nav class="route-table" aria-label="Sections">
-          {sections.map((s) => (
+          {sections.filter((s) => has[s.id]).map((s) => (
             <a href={`#${s.id}`} data-nav={s.id} title={s.alias}>{s.name}</a>
           ))}
         </nav>
@@ -173,13 +192,17 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
       <section class="hero" id="top" aria-label="Introduction">
         <div class="hero__text">
           <p class="node-label">
-            <span class="node-label__node">NODE_AUTH: 10.0.0.2 <span class="node-label__sep">//</span></span>
-            <span class="status"><span class="status__led" aria-hidden="true"></span>STATUS: AVAILABLE</span>
-            <span class="node-label__dim">&nbsp;· full-time</span>
+            <span class="node-label__node">NODE_AUTH: 10.0.0.2{availability && <span class="node-label__sep"> //</span>}</span>
+            {availability && (
+              <>
+                <span class="status"><span class="status__led" aria-hidden="true"></span>STATUS: AVAILABLE</span>
+                <span class="node-label__dim">&nbsp;· {availability}</span>
+              </>
+            )}
           </p>
           <h1>{firstName}{lastName && (<><br />{lastName}</>)}</h1>
           <p class="tagline">{cv.role}</p>
-          <p class="hero__lead">{cv.tagline}.</p>
+          {cv.tagline && <p class="hero__lead">{/[.!?]$/.test(cv.tagline.trim()) ? cv.tagline.trim() : `${cv.tagline.trim()}.`}</p>}
 
           {targetRoles.length > 0 && (
             <p class="open-to">
@@ -244,12 +267,13 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
         <dl class="facts">
           {location && (<div class="fact"><dt>LOCATION_</dt><dd>{location.value}</dd></div>)}
           {relocation && (<div class="fact"><dt>RELOCATION_</dt><dd>Open to {relocation}</dd></div>)}
-          <div class="fact"><dt>START_</dt><dd>Immediately · full-time</dd></div>
+          {availability && (<div class="fact"><dt>START_</dt><dd>{availability}</dd></div>)}
           {languages && (<div class="fact"><dt>LANGUAGES_</dt><dd>{languages.items.join(" · ")}</dd></div>)}
         </dl>
       </section>
 
       <!-- ============ ABOUT ============ -->
+      {aboutSentences.length > 0 && (
       <section class="about" aria-labelledby="about-h">
         <div class="about__main">
           <h2 class="network-tag" id="about-h">PACKET_INSPECTION <span class="network-tag__alias">// about me</span></h2>
@@ -259,8 +283,10 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
           {credentials.map((c) => (<div class="kv__row"><dt>{c.k}_</dt><dd>{c.v}</dd></div>))}
         </dl>
       </section>
+      )}
 
       <!-- ============ EXPERIENCE ============ -->
+      {has.hops && (
       <section class="section" id="hops" aria-labelledby="hops-h">
         <div class="section-head">
           <span class={`shape shape--${sec.hops.shape}`} aria-hidden="true"></span>
@@ -276,7 +302,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
               </p>
               <div class="tl-item__body">
                 <h3>{exp.role}</h3>
-                <p class="company"><span class="company__name">{exp.company}</span> <span class="company__sep">·</span> {exp.location}</p>
+                <p class="company"><span class="company__name">{exp.company}</span>{exp.location && (<> <span class="company__sep">·</span> {exp.location}</>)}</p>
                 {exp.summary && <p class="desc">{exp.summary}</p>}
                 <ul class="hl-list" data-cap={BULLET_CAP}>
                   {exp.highlights.map((h) => <li set:html={emph(h)} />)}
@@ -291,8 +317,10 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
           ))}
         </ol>
       </section>
+      )}
 
       <!-- ============ PROJECTS ============ -->
+      {has.missions && (
       <section class="section" id="missions" aria-labelledby="missions-h">
         <div class="section-head">
           <span class={`shape shape--${sec.missions.shape}`} aria-hidden="true"></span>
@@ -300,10 +328,10 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
           <span class="section-head__alias">// {sec.missions.alias}</span>
         </div>
         <div class="missions">
-          {cv.projects.map((p, i) => {
-            const featured = i === 0;
+          {orderedProjects.map((p, i) => {
+            const featured = i === 0 && featuredIndex >= 0;
             const cap = featured ? PROJECT_CAP : 2;
-            const stats = featured ? extractStats(p.highlights) : [];
+            const stats = featured ? projectStats(p) : [];
             const title = p.url ? <a class="proj-link" href={projectHref(p.url)} target="_blank" rel="noopener">{p.name}</a> : p.name;
             return (
               <article class:list={["mission", { "mission--featured": featured }]}>
@@ -333,7 +361,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
                       <>
                         <p class="results__label">RESULTS_</p>
                         <dl class="stats">
-                          {stats.map((st) => (<div class="stat"><dt>{st.label}</dt><dd>{st.value}</dd></div>))}
+                          {stats.map((st) => (<div class="stat"><dt>{st.label}</dt><dd class:list={{ "stat__value--long": st.value.length > 7 }}>{st.value}</dd></div>))}
                         </dl>
                       </>
                     )}
@@ -345,9 +373,11 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
           })}
         </div>
       </section>
+      )}
 
       <!-- ============ CERTS + EDUCATION ============ -->
-      <div class="split">
+      <div class:list={["split", { "split--single": !(has.creds && has.training) }]}>
+      {has.creds && (
         <section class="section" id="creds" aria-labelledby="creds-h">
           <div class="section-head">
             <span class={`shape shape--${sec.creds.shape}`} aria-hidden="true"></span>
@@ -380,7 +410,9 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
             })}
           </div>
         </section>
+      )}
 
+      {has.training && (
         <section class="section" id="training" aria-labelledby="training-h">
           <div class="section-head">
             <span class={`shape shape--${sec.training.shape}`} aria-hidden="true"></span>
@@ -404,9 +436,11 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
             ))}
           </div>
         </section>
+      )}
       </div>
 
       <!-- ============ SKILLS ============ -->
+      {has.stack && (
       <section class="section" id="stack" aria-labelledby="stack-h">
         <div class="section-head">
           <span class={`shape shape--${sec.stack.shape}`} aria-hidden="true"></span>
@@ -432,6 +466,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
           ))}
         </dl>
       </section>
+      )}
 
       <!-- ============ CONTACT ============ -->
       <section class="section" id="uplink" aria-labelledby="uplink-h">
@@ -760,9 +795,11 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
       .v3 .stat:nth-child(even) { padding-left: 1rem; border-left: 1px solid var(--rule); }
       .v3 .stat dd { margin: 0; font-size: 2.1rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
       .v3 .stat dt { font-size: 0.85rem; line-height: 1.35; color: var(--muted); }
+      .v3 .stat dd.stat__value--long { font-size: 1.35rem; line-height: 1.2; letter-spacing: -0.01em; }
 
       /* ---------- certs + education ---------- */
       .v3 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; }
+      .v3 .split--single { grid-template-columns: 1fr; }
       .v3 .entries { display: grid; gap: 2.25rem; }
       .v3 .entry { border-top: 1px solid var(--rule-strong); padding-top: 1.75rem; }
       .v3 .entry__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
