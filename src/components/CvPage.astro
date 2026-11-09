@@ -277,7 +277,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
               </p>
               <div class="tl-item__body">
                 <h3>{exp.role}</h3>
-                <p class="company">{exp.company} — {exp.location}</p>
+                <p class="company"><span class="company__name">{exp.company}</span> <span class="company__sep">·</span> {exp.location}</p>
                 {exp.summary && <p class="desc">{exp.summary}</p>}
                 <ul class="hl-list" data-cap={BULLET_CAP}>
                   {exp.highlights.map((h) => <li set:html={emph(h)} />)}
@@ -391,7 +391,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
           <div class="entries">
             {eduGroups.map(([institution, items]) => (
               <article class="entry">
-                <p class="company company--school">{institution}</p>
+                <p class="company company--school"><span class="company__name">{institution}</span></p>
                 <ol class="degrees">
                   {items.map((e) => (
                     <li>
@@ -635,13 +635,15 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
       }
       .v3 .network-tag__alias { font-weight: 400; opacity: 0.85; margin-left: 0.25rem; }
       .v3 .year { display: block; font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--accent); margin-bottom: 0.6rem; }
-      .v3 .company { font-family: var(--mono); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 1rem; }
-      .v3 .desc { font-size: 1rem; line-height: 1.65; color: var(--text-2); max-width: 70ch; margin: 0 0 1rem; }
-      .v3 h3 { font-size: 1.3rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 0.45rem; text-wrap: balance; }
+      .v3 .company { font-family: var(--mono); font-size: 0.82rem; font-weight: 400; color: var(--muted); line-height: 1.5; margin: 0 0 1rem; }
+      .v3 .company__name { font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-2); }
+      .v3 .company__sep { color: var(--accent); }
+      .v3 .desc { font-size: 1rem; line-height: 1.65; color: var(--text-2); max-width: 62ch; margin: 0 0 1rem; }
+      .v3 h3 { font-size: 1.3rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 0.45rem; text-wrap: balance; }
       .v3 .slash { color: var(--accent); }
 
       .v3 .hl-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.55rem; }
-      .v3 .hl-list li { position: relative; padding-left: 1.3rem; font-size: 1rem; line-height: 1.6; color: var(--text-2); max-width: 72ch; }
+      .v3 .hl-list li { position: relative; padding-left: 1.3rem; font-size: 1rem; line-height: 1.6; color: var(--text-2); max-width: 62ch; }
       .v3 .hl-list li::before { content: ">"; position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 0.85rem; color: var(--accent); }
       .v3 .hl-list strong { color: var(--text); font-weight: 700; }
 
@@ -714,7 +716,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
       /* ---------- about ---------- */
       .v3 .about { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 4rem; align-items: start; padding: 3rem 0 0; }
       .v3 .about h2.network-tag { font-size: 0.72rem; line-height: 1.6; }
-      .v3 .about__text { font-size: 1.1rem; line-height: 1.7; color: var(--text-2); max-width: 68ch; margin: 0; }
+      .v3 .about__text { font-size: 1.1rem; line-height: 1.7; color: var(--text-2); max-width: 62ch; margin: 0; }
       .v3 .kv { margin: 0; padding-top: 2.6rem; }
       .v3 .kv__row { padding: 0.8rem 0; border-top: 1px solid var(--rule); }
       .v3 .kv__row:last-child { border-bottom: 1px solid var(--rule); }
@@ -749,7 +751,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
         grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 3.5rem;
         border-top: 2px solid var(--accent); padding-top: 2.25rem;
       }
-      .v3 .mission--featured h3 { font-size: 1.65rem; line-height: 1.2; max-width: 30ch; }
+      .v3 .mission--featured h3 { font-size: 1.65rem; line-height: 1.3; max-width: 30ch; }
       .v3 .proj-link { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; transition: color 150ms ease, border-color 150ms ease; }
       .v3 .proj-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
       .v3 .mission__results { border-left: 1px solid var(--rule); padding-left: 2.5rem; align-self: start; }
@@ -788,7 +790,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
 
       /* ---------- contact ---------- */
       .v3 .uplink { display: grid; grid-template-columns: 1.1fr 1fr; gap: 4rem; align-items: start; }
-      .v3 .uplink__lead { font-size: 1.6rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 1.75rem; max-width: 24ch; }
+      .v3 .uplink__lead { font-size: 1.6rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 1.75rem; max-width: 24ch; }
       .v3 .contact-list { margin: 0; border-top: 1px solid var(--rule-strong); }
       .v3 .contact-list > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 1rem; padding: 0.85rem 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
       .v3 .contact-list dt { font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--accent); }
