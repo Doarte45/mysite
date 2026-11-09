@@ -390,7 +390,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
           <div class="entries">
             {eduGroups.map(([institution, items]) => (
               <article class="entry">
-                <p class="company company--school"><span class="company__name">{institution}</span></p>
+                <p class="company company--school">{institution}</p>
                 <ol class="degrees">
                   {items.map((e) => (
                     <li>
@@ -624,8 +624,8 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
       .v3 .node-label__sep { opacity: 0.6; margin: 0 0.25rem; }
       .v3 .node-label__dim { color: var(--muted); }
       .v3 .status { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; }
-      .v3 .status__led { width: 8px; height: 8px; background: var(--accent); animation: blink 2.2s steps(1) infinite; }
-      @media (prefers-reduced-motion: reduce) { .v3 .brand__cursor, .v3 .status__led { animation: none; } }
+      .v3 .status__led { width: 8px; height: 8px; background: var(--accent); }
+      @media (prefers-reduced-motion: reduce) { .v3 .brand__cursor { animation: none; } }
 
       .v3 .network-tag {
         display: inline-block; margin: 0 0 1rem; padding: 0.25rem 0.6rem;
@@ -769,7 +769,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
       .v3 .entry .desc { font-size: 0.96rem; }
       .v3 .badge { flex: none; display: block; }
       .v3 .badge img { display: block; width: 64px; height: 64px; }
-      .v3 .company--school { color: var(--text); margin-bottom: 1.25rem; }
+      .v3 .company--school { color: var(--text); font-weight: 700; font-size: 0.9rem; margin-bottom: 1.25rem; }
       .v3 .degrees { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.5rem; }
       .v3 .degrees li { padding-left: 1rem; border-left: 1px solid var(--rule-strong); }
       .v3 .degrees li:first-child { border-left: 2px solid var(--accent); }
