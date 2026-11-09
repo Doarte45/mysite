@@ -1,0 +1,869 @@
+---
+import { Image } from "astro:assets";
+import BaseHead from "../layouts/BaseHead.astro";
+import CompareBar from "./CompareBar.astro";
+import { cv, type Education } from "../data/cv.ts";
+import mePhoto from "../assets/me.jpg";
+
+export interface Props {
+  /** Show the before/after design switcher (comparison route only). */
+  compare?: boolean;
+}
+const { compare = false } = Astro.props;
+
+const nameParts = cv.name.split(" ");
+const firstName = nameParts[0];
+const lastName = nameParts.slice(1).join(" ");
+
+const base = import.meta.env.BASE_URL;
+const resumeHref = `${base}/resume.pdf`.replace(/\/+/g, "/");
+const siteUrl = new URL(base, Astro.site ?? Astro.url.origin).toString();
+
+const emailLink = cv.contact.find((c) => c.href.startsWith("mailto:"));
+const email = emailLink?.value;
+const linkedin = cv.contact.find((c) => /linkedin/i.test(c.label));
+const location = cv.contact.find((c) => /location/i.test(c.label));
+const languages = cv.skills.find((g) => /language/i.test(g.heading));
+const techSkills = cv.skills.filter((g) => g !== languages);
+
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: cv.name,
+  jobTitle: cv.role,
+  url: siteUrl,
+  ...(email && { email: `mailto:${email}` }),
+  sameAs: cv.contact.filter((c) => c.href.startsWith("http") && c.label !== "Location").map((c) => c.href),
+  alumniOf: cv.education.map((e) => ({ "@type": "EducationalOrganization", name: e.institution })),
+};
+
+// Network names lead; plain-English aliases sit beside them for recruiters.
+const sections = [
+  { id: "hops", name: "HOP_HISTORY", alias: "work experience", shape: "square" },
+  { id: "missions", name: "MISSION_LOG", alias: "projects", shape: "square" },
+  { id: "creds", name: "CRED_CHAIN", alias: "certifications", shape: "square" },
+  { id: "training", name: "TRAINING_DATA", alias: "education", shape: "square" },
+  { id: "stack", name: "SECURITY_STACK", alias: "skills", shape: "circle" },
+  { id: "uplink", name: "UPLINK_PROTOCOL", alias: "contact", shape: "triangle" },
+] as const;
+const sec = Object.fromEntries(sections.map((s) => [s.id, s])) as Record<(typeof sections)[number]["id"], (typeof sections)[number]>;
+
+// Summary → hero "open to" roles + an About block that doesn't repeat the hero.
+const sentences = cv.summary.match(/[^.!?]+(?:[.!?](?=\s|$))+/g)?.map((t) => t.trim()) ?? [cv.summary];
+const seekingSentence = sentences.find((t) => /^seeking\b/i.test(t));
+const targetRoles =
+  seekingSentence
+    ?.replace(/^seeking\s+/i, "")
+    .replace(/\s+roles?\.?$/i, "")
+    .split(/,\s*(?:or\s+|and\s+)?|\s+or\s+/)
+    .map((r) => r.trim())
+    .filter(Boolean) ?? [];
+const aboutSentences = sentences.filter((t, i) => t !== seekingSentence && !(i === 0 && /available/i.test(t)));
+
+const escapeHtml = (t: string) =>
+  t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const METRIC = /(~?\d[\d.]*%|\$\d[\d.]*(?:\/session)?|\d+\+?\s(?:hours|hands-on labs)|\d+-session|\bzero sessions\b|\bsix simultaneously active faults\b)/gi;
+const emph = (t: string) => escapeHtml(t).replace(METRIC, "<strong>$1</strong>");
+
+// Headline numbers for the featured project ("… rate of ~97%", "$0.81/session", "50-session").
+const extractStats = (lines: readonly string[] = []) => {
+  const out: { value: string; label: string }[] = [];
+  for (const l of lines) {
+    for (const m of l.matchAll(/\b([a-z][a-z -]{2,60}?)\s+of\s+(~?\$?\d[\d.]*%?)(\/[a-z]+)?/gi)) {
+      const label = (m[1] + (m[3] ? ` per ${m[3].slice(1)}` : "")).replace(/^((achieved|an?|and|at|the|with)\s+)+/i, "");
+      out.push({ value: m[2], label: label.charAt(0).toUpperCase() + label.slice(1) });
+    }
+    const n = l.match(/\b(\d+)-session\b/i);
+    if (n) out.push({ value: n[1], label: "Sessions run" });
+  }
+  return out.slice(0, 4);
+};
+
+const BULLET_CAP = 3;
+const PROJECT_CAP = 3;
+
+const abbr = (inst: string) => inst.match(/\(([^)]+)\)\s*$/)?.[1] ?? inst;
+const credentials = [
+  ...cv.education.slice(0, 1).map((e) => ({ k: "DEGREE", v: `${e.degree.split(/,|\s+[–-]\s+/)[0]} · ${abbr(e.institution)}` })),
+  ...(cv.certifications.length
+    ? [{ k: "CERTIFIED", v: cv.certifications.map((c) => c.name.replace(/\s*Certification$/i, "")).join(" · ") }]
+    : []),
+];
+
+const LEVEL = /^(.*?)\s*\((basic|intermediate|advanced|native|fluent)\)$/i;
+const splitLevel = (item: string) => {
+  const m = item.match(LEVEL);
+  const name = (m ? m[1] : item).trim();
+  return { name: name.charAt(0).toUpperCase() + name.slice(1), level: m?.[2]?.toLowerCase() };
+};
+const isCoreGroup = (heading: string) => /cybersecurity|security tools/i.test(heading);
+
+const eduGroups = [
+  ...cv.education.reduce((m, e) => m.set(e.institution, [...(m.get(e.institution) ?? []), e]), new Map<string, Education[]>()),
+];
+
+const relocation = cv.location.match(/relocation\s*[-–:]\s*([^)]+)/i)?.[1]?.trim();
+const githubUser = cv.projects.map((pr) => pr.url?.match(/github\.com\/([^/]+)/i)?.[1]).find(Boolean);
+const projectHref = (url: string) => (url.startsWith("http") ? url : `https://${url}`);
+const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
+---
+
+<html lang="en">
+  <head>
+    <BaseHead title={`${cv.name} — Cybersecurity Engineer`} description={`${cv.name}, ${cv.role}. ${cv.tagline}`} />
+    {compare && <meta name="robots" content="noindex" />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="application/ld+json" set:html={JSON.stringify(personLd)} />
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem("v3-theme");
+          var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          document.documentElement.dataset.v3Theme = stored || (prefersDark ? "dark" : "light");
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class:list={["v3", { "has-compare": compare }]}>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="network-lines" aria-hidden="true">
+      <svg width="100%" height="100%">
+        <line class="net-line net-line--strong" x1="10%" y1="10%" x2="90%" y2="90%" />
+        <line class="net-line net-line--strong" x1="90%" y1="10%" x2="10%" y2="90%" />
+        <line class="net-line net-line--faint" x1="50%" y1="0%" x2="50%" y2="100%" />
+      </svg>
+    </div>
+
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="brand" href="#top" aria-label="Back to top">
+          <span class="brand__prompt">~/</span>{firstName.toLowerCase()}<span class="brand__cursor" aria-hidden="true"></span>
+        </a>
+        <nav class="route-table" aria-label="Sections">
+          {sections.map((s) => (
+            <a href={`#${s.id}`} data-nav={s.id} title={s.alias}>{s.name}</a>
+          ))}
+        </nav>
+        <a class="topbar__cv" href={resumeHref} target="_blank" rel="noopener">[ CV ↓ ]</a>
+        <button class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" data-theme-toggle>
+          <svg class="icon icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" fill="currentColor" />
+            <g stroke="currentColor" stroke-width="1.8" stroke-linecap="square">
+              <line x1="12" y1="2" x2="12" y2="5" /><line x1="12" y1="19" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="5" y2="12" /><line x1="19" y1="12" x2="22" y2="12" />
+              <line x1="4.5" y1="4.5" x2="6.5" y2="6.5" /><line x1="17.5" y1="17.5" x2="19.5" y2="19.5" />
+              <line x1="4.5" y1="19.5" x2="6.5" y2="17.5" /><line x1="17.5" y1="6.5" x2="19.5" y2="4.5" />
+            </g>
+          </svg>
+          <svg class="icon icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 14.5A8 8 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" fill="currentColor" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ============ HERO ============ -->
+      <section class="hero" id="top" aria-label="Introduction">
+        <div class="hero__text">
+          <p class="node-label">
+            <span class="node-label__node">NODE_AUTH: 10.0.0.2 <span class="node-label__sep">//</span></span>
+            <span class="status"><span class="status__led" aria-hidden="true"></span>STATUS: AVAILABLE</span>
+            <span class="node-label__dim">&nbsp;· full-time</span>
+          </p>
+          <h1>{firstName}{lastName && (<><br />{lastName}</>)}</h1>
+          <p class="tagline">{cv.role}</p>
+          <p class="hero__lead">{cv.tagline}.</p>
+
+          {targetRoles.length > 0 && (
+            <p class="open-to">
+              <span class="network-tag">OPEN_TO</span>
+              <span class="open-to__roles">
+                {targetRoles.map((r, i) => (<>{i > 0 && <span class="slash" aria-hidden="true"> / </span>}<span>{r}</span></>))}
+              </span>
+            </p>
+          )}
+
+          <div class="cta-row">
+            <a class="bracket-btn bracket-btn--solid" href={resumeHref} target="_blank" rel="noopener">
+              <span class="bracket-btn__b">[</span>DOWNLOAD_CV.PDF<span class="bracket-btn__arrow">↓</span><span class="bracket-btn__b">]</span>
+            </a>
+            {emailLink && (
+              <a class="bracket-btn" href={emailLink.href}><span class="bracket-btn__b">[</span>EMAIL<span class="bracket-btn__b">]</span></a>
+            )}
+            {linkedin && (
+              <a class="bracket-btn" href={linkedin.href} target="_blank" rel="noopener"><span class="bracket-btn__b">[</span>LINKEDIN<span class="bracket-btn__arrow">↗</span><span class="bracket-btn__b">]</span></a>
+            )}
+          </div>
+        </div>
+
+        <figure class="portrait">
+          <svg class="topo" viewBox="0 0 400 520" aria-hidden="true">
+            <g class="topo__links">
+              <path id="l1" d="M24 118 L24 34 L376 34" />
+              <path id="l3" d="M376 34 L380 290" /><path id="l4" d="M380 290 L322 496" />
+              <path id="l5" d="M24 118 L22 396" /><path id="l6" d="M22 396 L22 496 L322 496" />
+            </g>
+            <g class="topo__packets">
+              <circle r="3"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#l1" /></animateMotion></circle>
+              <circle r="3"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#l5" /></animateMotion></circle>
+              <circle r="3"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#l3" /></animateMotion></circle>
+            </g>
+            <g class="topo__nodes">
+              <g transform="translate(24 118)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R1</text></g>
+              <g transform="translate(376 34)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R2</text></g>
+              <g transform="translate(380 290)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R3</text></g>
+              <g transform="translate(22 396)"><rect x="-22" y="-11" width="44" height="22" rx="5" /><text y="4">DMZ</text></g>
+              <g transform="translate(322 496)"><rect x="-22" y="-11" width="44" height="22" rx="5" /><text y="4">SOC</text></g>
+            </g>
+          </svg>
+          <div class="portrait__frame">
+            <span class="corner corner--tl" aria-hidden="true"></span>
+            <span class="corner corner--tr" aria-hidden="true"></span>
+            <span class="corner corner--bl" aria-hidden="true"></span>
+            <span class="corner corner--br" aria-hidden="true"></span>
+            <Image
+              src={mePhoto}
+              alt={`Portrait of ${cv.name}`}
+              widths={[240, 360, 480, 720]}
+              sizes="(max-width: 760px) 120px, 280px"
+              width={720}
+              loading="eager"
+              fetchpriority="high"
+            />
+          </div>
+        </figure>
+
+        <dl class="facts">
+          {location && (<div class="fact"><dt>LOCATION_</dt><dd>{location.value}</dd></div>)}
+          {relocation && (<div class="fact"><dt>RELOCATION_</dt><dd>Open to {relocation}</dd></div>)}
+          <div class="fact"><dt>START_</dt><dd>Immediately · full-time</dd></div>
+          {languages && (<div class="fact"><dt>LANGUAGES_</dt><dd>{languages.items.join(" · ")}</dd></div>)}
+        </dl>
+      </section>
+
+      <!-- ============ ABOUT ============ -->
+      <section class="about" aria-labelledby="about-h">
+        <div class="about__main">
+          <h2 class="network-tag" id="about-h">PACKET_INSPECTION <span class="network-tag__alias">// about me</span></h2>
+          <p class="about__text">{aboutSentences.join(" ")}</p>
+        </div>
+        <dl class="kv">
+          {credentials.map((c) => (<div class="kv__row"><dt>{c.k}_</dt><dd>{c.v}</dd></div>))}
+        </dl>
+      </section>
+
+      <!-- ============ EXPERIENCE ============ -->
+      <section class="section" id="hops" aria-labelledby="hops-h">
+        <div class="section-head">
+          <span class={`shape shape--${sec.hops.shape}`} aria-hidden="true"></span>
+          <h2 id="hops-h">{sec.hops.name}</h2>
+          <span class="section-head__alias">// {sec.hops.alias}</span>
+        </div>
+        <ol class="timeline">
+          {cv.experience.map((exp) => (
+            <li class="tl-item">
+              <p class="tl-item__period">
+                <span class="tl-item__src">SRC:</span>
+                {periodParts(exp.period).map((part, j, all) => (<span class="nowrap">{part}{j < all.length - 1 ? " – " : ""}</span>))}
+              </p>
+              <div class="tl-item__body">
+                <h3>{exp.role}</h3>
+                <p class="company">{exp.company} — {exp.location}</p>
+                {exp.summary && <p class="desc">{exp.summary}</p>}
+                <ul class="hl-list">
+                  {exp.highlights.slice(0, BULLET_CAP).map((h) => <li set:html={emph(h)} />)}
+                </ul>
+                {exp.highlights.length > BULLET_CAP && (
+                  <details class="more">
+                    <summary><span class="more__open">show {exp.highlights.length - BULLET_CAP} more</span><span class="more__close">show less</span></summary>
+                    <ul class="hl-list">{exp.highlights.slice(BULLET_CAP).map((h) => <li set:html={emph(h)} />)}</ul>
+                  </details>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <!-- ============ PROJECTS ============ -->
+      <section class="section" id="missions" aria-labelledby="missions-h">
+        <div class="section-head">
+          <span class={`shape shape--${sec.missions.shape}`} aria-hidden="true"></span>
+          <h2 id="missions-h">{sec.missions.name}</h2>
+          <span class="section-head__alias">// {sec.missions.alias}</span>
+        </div>
+        <div class="missions">
+          {cv.projects.map((p, i) => {
+            const featured = i === 0;
+            const cap = featured ? PROJECT_CAP : 2;
+            const stats = featured ? extractStats(p.highlights) : [];
+            const title = p.url ? <a class="proj-link" href={projectHref(p.url)} target="_blank" rel="noopener">{p.name}</a> : p.name;
+            return (
+              <article class:list={["mission", { "mission--featured": featured }]}>
+                <div class="mission__main">
+                  {featured && <span class="network-tag">FEATURED_RESEARCH</span>}
+                  <span class="year">REF: {p.year}</span>
+                  <h3>{title}</h3>
+                  <p class="company">{p.stack.join(" / ")}</p>
+                  {p.description && <p class="desc">{p.description}</p>}
+                  {p.highlights && (
+                    <>
+                      <ul class="hl-list">{p.highlights.slice(0, cap).map((h) => <li set:html={emph(h)} />)}</ul>
+                      {p.highlights.length > cap && (
+                        <details class="more">
+                          <summary><span class="more__open">show {p.highlights.length - cap} more</span><span class="more__close">show less</span></summary>
+                          <ul class="hl-list">{p.highlights.slice(cap).map((h) => <li set:html={emph(h)} />)}</ul>
+                        </details>
+                      )}
+                    </>
+                  )}
+                  {p.url && !featured && (
+                    <a class="mono-link" href={projectHref(p.url)} target="_blank" rel="noopener">{prettyUrl(p.url)} ↗</a>
+                  )}
+                </div>
+                {featured && (
+                  <aside class="mission__results" aria-label="Results">
+                    {stats.length >= 2 && (
+                      <>
+                        <p class="results__label">RESULTS_</p>
+                        <dl class="stats">
+                          {stats.map((st) => (<div class="stat"><dt>{st.label}</dt><dd>{st.value}</dd></div>))}
+                        </dl>
+                      </>
+                    )}
+                    {p.url && <a class="mono-link" href={projectHref(p.url)} target="_blank" rel="noopener">{prettyUrl(p.url)} ↗</a>}
+                  </aside>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <!-- ============ CERTS + EDUCATION ============ -->
+      <div class="split">
+        <section class="section" id="creds" aria-labelledby="creds-h">
+          <div class="section-head">
+            <span class={`shape shape--${sec.creds.shape}`} aria-hidden="true"></span>
+            <h2 id="creds-h">{sec.creds.name}</h2>
+            <span class="section-head__alias">// {sec.creds.alias}</span>
+          </div>
+          <div class="entries">
+            {cv.certifications.map((c) => {
+              const verify = c.badgeId ? `https://www.credly.com/badges/${c.badgeId}` : undefined;
+              return (
+                <article class="entry">
+                  <div class="entry__head">
+                    <div>
+                      <span class="year">{c.date}</span>
+                      <h3>{c.name}</h3>
+                      <p class="company">{c.issuer}</p>
+                    </div>
+                    {c.badgeImage && (verify ? (
+                      <a class="badge" href={verify} target="_blank" rel="noopener noreferrer" title="Verify on Credly">
+                        <img src={c.badgeImage} alt={`${c.name} badge — verify on Credly`} width="64" height="64" loading="lazy" />
+                      </a>
+                    ) : (
+                      <span class="badge"><img src={c.badgeImage} alt={`${c.name} badge`} width="64" height="64" loading="lazy" /></span>
+                    ))}
+                  </div>
+                  {c.detail && <p class="desc" set:html={emph(c.detail)} />}
+                  {verify && <a class="mono-link" href={verify} target="_blank" rel="noopener noreferrer">VERIFY_CREDENTIAL ↗</a>}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section class="section" id="training" aria-labelledby="training-h">
+          <div class="section-head">
+            <span class={`shape shape--${sec.training.shape}`} aria-hidden="true"></span>
+            <h2 id="training-h">{sec.training.name}</h2>
+            <span class="section-head__alias">// {sec.training.alias}</span>
+          </div>
+          <div class="entries">
+            {eduGroups.map(([institution, items]) => (
+              <article class="entry">
+                <p class="company company--school">{institution}</p>
+                <ol class="degrees">
+                  {items.map((e) => (
+                    <li>
+                      <span class="year">{e.period}</span>
+                      <h3>{e.degree}</h3>
+                      {e.detail && <p class="desc">{e.detail}</p>}
+                    </li>
+                  ))}
+                </ol>
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <!-- ============ SKILLS ============ -->
+      <section class="section" id="stack" aria-labelledby="stack-h">
+        <div class="section-head">
+          <span class={`shape shape--${sec.stack.shape}`} aria-hidden="true"></span>
+          <h2 id="stack-h">{sec.stack.name}</h2>
+          <span class="section-head__alias">// {sec.stack.alias}</span>
+        </div>
+        <dl class="stack">
+          {techSkills.map((g) => (
+            <div class:list={["stack__row", { "stack__row--core": isCoreGroup(g.heading) }]}>
+              <dt>{g.heading}</dt>
+              <dd>
+                {g.items.map((item, i) => {
+                  const { name, level } = splitLevel(item);
+                  return (
+                    <>
+                      {i > 0 && <span class="slash" aria-hidden="true"> / </span>}
+                      <span class="skill">{name}{level && <span class="skill__level"> ({level})</span>}</span>
+                    </>
+                  );
+                })}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <!-- ============ CONTACT ============ -->
+      <section class="section" id="uplink" aria-labelledby="uplink-h">
+        <div class="section-head">
+          <span class={`shape shape--${sec.uplink.shape}`} aria-hidden="true"></span>
+          <h2 id="uplink-h">{sec.uplink.name}</h2>
+          <span class="section-head__alias">// {sec.uplink.alias}</span>
+        </div>
+        <div class="uplink">
+          <div>
+            <p class="uplink__lead">
+              {targetRoles.length ? `Hiring for ${targetRoles.join(", ").replace(/, ([^,]*)$/, " or $1")}? Let's talk.` : "Let's talk."}
+            </p>
+            <div class="cta-row">
+              {emailLink && (
+                <a class="bracket-btn bracket-btn--solid" href={emailLink.href}><span class="bracket-btn__b">[</span>SEND_EMAIL<span class="bracket-btn__arrow">→</span><span class="bracket-btn__b">]</span></a>
+              )}
+              <a class="bracket-btn" href={resumeHref} target="_blank" rel="noopener"><span class="bracket-btn__b">[</span>DOWNLOAD_CV.PDF<span class="bracket-btn__arrow">↓</span><span class="bracket-btn__b">]</span></a>
+            </div>
+          </div>
+          <dl class="contact-list">
+            {emailLink && (<div><dt>EMAIL_</dt><dd><a href={emailLink.href}>{emailLink.value}</a></dd></div>)}
+            {linkedin && (<div><dt>LINKEDIN_</dt><dd><a href={linkedin.href} target="_blank" rel="noopener">{linkedin.value} ↗</a></dd></div>)}
+            {githubUser && (<div><dt>GITHUB_</dt><dd><a href={`https://github.com/${githubUser}`} target="_blank" rel="noopener">github.com/{githubUser} ↗</a></dd></div>)}
+            {location && (<div><dt>LOCATION_</dt><dd>{location.value}</dd></div>)}
+          </dl>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>© {new Date().getFullYear()} {cv.name} <span class="footer__dim">// EOF</span></span>
+      <a href="#top">RETURN_TO_ORIGIN ↑</a>
+    </footer>
+
+    {compare && <CompareBar current="after" />}
+
+    <script>
+      const root = document.documentElement;
+      const btn = document.querySelector("[data-theme-toggle]");
+      function apply(theme: string) {
+        root.dataset.v3Theme = theme;
+        btn?.setAttribute("aria-pressed", String(theme === "dark"));
+      }
+      apply(root.dataset.v3Theme || "light");
+      btn?.addEventListener("click", () => {
+        const next = root.dataset.v3Theme === "dark" ? "light" : "dark";
+        localStorage.setItem("v3-theme", next);
+        apply(next);
+      });
+
+      // Route-table scroll-spy.
+      const links = new Map([...document.querySelectorAll<HTMLAnchorElement>("[data-nav]")].map((a) => [a.dataset.nav!, a]));
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            links.forEach((a) => a.removeAttribute("aria-current"));
+            links.get(e.target.id)?.setAttribute("aria-current", "true");
+          }
+        },
+        { rootMargin: "-40% 0px -55% 0px" },
+      );
+      links.forEach((_, id) => {
+        const el = document.getElementById(id);
+        if (el) io.observe(el);
+      });
+      const hero = document.getElementById("top");
+      if (hero) io.observe(hero);
+    </script>
+
+    <style is:global>
+      html { scroll-behavior: smooth; }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+      body.v3 {
+        --mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        --sans: "Space Grotesk", system-ui, sans-serif;
+        --bg: #ffffff;
+        --text: #000000;
+        --text-2: #2c2c35;
+        --muted: #4b4b55;
+        --muted-2: #6e6e78;
+        --accent: #4338ca;
+        --accent-ink: #ffffff;
+        --rule: #e6e6ec;
+        --rule-strong: #c9c9d4;
+        --accent-tint: rgba(67, 56, 202, 0.05);
+        --accent-line: rgba(67, 56, 202, 0.25);
+        --net-strong: rgba(67, 56, 202, 0.1);
+        --net-faint: rgba(67, 56, 202, 0.05);
+        --maxw: 1200px;
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 17px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+        transition: background-color 200ms ease, color 200ms ease;
+      }
+      html[data-v3-theme="dark"] body.v3 {
+        --bg: #0b0b10;
+        --text: #f5f5f7;
+        --text-2: #d4d4de;
+        --muted: #b9b9c6;
+        --muted-2: #8e8e9c;
+        --accent: #8b80ff;
+        --accent-ink: #0b0b10;
+        --rule: #1f1f28;
+        --rule-strong: #34343f;
+        --accent-tint: rgba(139, 128, 255, 0.08);
+        --accent-line: rgba(139, 128, 255, 0.3);
+        --net-strong: rgba(139, 128, 255, 0.18);
+        --net-faint: rgba(139, 128, 255, 0.08);
+      }
+      body.v3.has-compare { padding-bottom: 72px; }
+      .v3 *, .v3 *::before, .v3 *::after { box-sizing: border-box; }
+      .v3 ::selection { background: var(--accent); color: var(--accent-ink); }
+      .v3 a:focus-visible, .v3 button:focus-visible, .v3 summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+      .v3 [id] { scroll-margin-top: 84px; }
+      .v3 .nowrap { white-space: nowrap; }
+
+      .v3 .skip-link {
+        position: fixed; top: 12px; left: 12px; z-index: 100; padding: 0.6rem 1rem;
+        font-family: var(--mono); font-size: 0.8rem; color: var(--accent); background: var(--bg);
+        border: 1px solid var(--accent); text-decoration: none; transform: translateY(-200%); transition: transform 150ms ease;
+      }
+      .v3 .skip-link:focus-visible { transform: translateY(0); }
+
+      /* background network lines (original) */
+      .v3 .network-lines { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+      .v3 .net-line { stroke-width: 1; }
+      .v3 .net-line--strong { stroke: var(--net-strong); }
+      .v3 .net-line--faint { stroke: var(--net-faint); }
+
+      /* ---------- top bar ---------- */
+      .v3 .topbar {
+        position: sticky; top: 0; z-index: 50;
+        background: color-mix(in srgb, var(--bg) 88%, transparent);
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--rule);
+      }
+      .v3 .topbar__inner { max-width: var(--maxw); margin: 0 auto; padding: 0 4rem; height: 60px; display: flex; align-items: center; gap: 1.5rem; }
+      .v3 .brand { font-family: var(--mono); font-weight: 700; font-size: 0.95rem; color: var(--text); text-decoration: none; display: inline-flex; align-items: center; }
+      .v3 .brand__prompt { color: var(--accent); }
+      .v3 .brand__cursor { display: inline-block; width: 0.55em; height: 1.05em; margin-left: 2px; background: var(--accent); animation: blink 1.1s steps(1) infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+      .v3 .route-table { display: flex; margin-left: auto; }
+      .v3 .route-table a {
+        font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; color: var(--muted);
+        text-decoration: none; padding: 0.45rem 0.6rem; border-bottom: 2px solid transparent;
+        transition: color 150ms ease, border-color 150ms ease;
+      }
+      .v3 .route-table a:hover { color: var(--accent); }
+      .v3 .route-table a[aria-current] { color: var(--accent); border-bottom-color: var(--accent); }
+      .v3 .topbar__cv { display: none; }
+      .v3 .theme-toggle {
+        width: 38px; height: 38px; flex: none; display: inline-flex; align-items: center; justify-content: center;
+        background: var(--bg); color: var(--text); border: 1px solid var(--rule-strong); cursor: pointer; padding: 0;
+        transition: color 150ms ease, border-color 150ms ease;
+      }
+      .v3 .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+      .v3 .theme-toggle .icon { width: 18px; height: 18px; }
+      .v3 .theme-toggle .icon--sun { display: none; }
+      html[data-v3-theme="dark"] .v3 .theme-toggle .icon--sun { display: block; }
+      html[data-v3-theme="dark"] .v3 .theme-toggle .icon--moon { display: none; }
+
+      .v3 main { position: relative; z-index: 1; max-width: var(--maxw); margin: 0 auto; padding: 0 4rem; }
+
+      /* ---------- shared bits (original vocabulary) ---------- */
+      .v3 .node-label { font-family: var(--mono); font-size: 0.75rem; color: var(--accent); margin: 0 0 1.25rem; }
+      .v3 .node-label__sep { opacity: 0.6; margin: 0 0.25rem; }
+      .v3 .node-label__dim { color: var(--muted); }
+      .v3 .status { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; }
+      .v3 .status__led { width: 8px; height: 8px; background: var(--accent); animation: blink 2.2s steps(1) infinite; }
+      @media (prefers-reduced-motion: reduce) { .v3 .brand__cursor, .v3 .status__led { animation: none; } }
+
+      .v3 .network-tag {
+        display: inline-block; margin: 0 0 1rem; padding: 0.25rem 0.6rem;
+        font-family: var(--mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+        background: var(--accent); color: var(--accent-ink);
+      }
+      .v3 .network-tag__alias { font-weight: 400; opacity: 0.85; margin-left: 0.25rem; }
+      .v3 .year { display: block; font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--accent); margin-bottom: 0.6rem; }
+      .v3 .company { font-family: var(--mono); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 1rem; }
+      .v3 .desc { font-size: 1rem; line-height: 1.65; color: var(--text-2); max-width: 70ch; margin: 0 0 1rem; }
+      .v3 h3 { font-size: 1.3rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 0.45rem; text-wrap: balance; }
+      .v3 .slash { color: var(--accent); }
+
+      .v3 .hl-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.55rem; }
+      .v3 .hl-list li { position: relative; padding-left: 1.3rem; font-size: 1rem; line-height: 1.6; color: var(--text-2); max-width: 72ch; }
+      .v3 .hl-list li::before { content: ">"; position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 0.85rem; color: var(--accent); }
+      .v3 .hl-list strong { color: var(--text); font-weight: 700; }
+
+      .v3 .more { margin-top: 0.55rem; }
+      .v3 .more > summary { list-style: none; cursor: pointer; display: inline-block; font-family: var(--mono); font-size: 0.82rem; color: var(--accent); padding: 0.2rem 0; }
+      .v3 .more > summary::-webkit-details-marker { display: none; }
+      .v3 .more > summary::before { content: "[+] "; }
+      .v3 .more[open] > summary::before { content: "[−] "; }
+      .v3 .more .more__close, .v3 .more[open] .more__open { display: none; }
+      .v3 .more[open] .more__close { display: inline; }
+      .v3 .more[open] > summary { margin-bottom: 0.55rem; }
+
+      .v3 .mono-link {
+        display: inline-block; margin-top: 1rem; font-family: var(--mono); font-size: 0.82rem; color: var(--accent);
+        text-decoration: none; border-bottom: 1px solid var(--accent-line); overflow-wrap: anywhere;
+      }
+      .v3 .mono-link:hover { border-bottom-color: var(--accent); }
+
+      /* bracket buttons (original dossier style) */
+      .v3 .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+      .v3 .bracket-btn {
+        display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.7rem 1.05rem; white-space: nowrap;
+        font-family: var(--mono); font-size: 0.85rem; letter-spacing: 0.06em; text-decoration: none;
+        color: var(--accent); border: 1px solid var(--accent); background: var(--bg);
+        transition: background-color 150ms ease, color 150ms ease;
+      }
+      .v3 .bracket-btn__b { opacity: 0.55; }
+      .v3 .bracket-btn__arrow { transition: transform 150ms ease; }
+      .v3 .bracket-btn:hover { background: var(--accent); color: var(--accent-ink); }
+      .v3 .bracket-btn:hover .bracket-btn__arrow { transform: translateX(2px); }
+      .v3 .bracket-btn--solid { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+      .v3 .bracket-btn--solid:hover { background: var(--text); border-color: var(--text); color: var(--bg); }
+
+      /* ---------- hero ---------- */
+      .v3 .hero {
+        display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: "text portrait" "facts facts";
+        gap: 3rem 4rem; align-items: center; padding: 5rem 0 2.5rem;
+      }
+      .v3 .hero__text { grid-area: text; }
+      .v3 h1 { font-size: clamp(2.75rem, 6vw, 5rem); line-height: 0.92; font-weight: 700; letter-spacing: -0.04em; margin: 0 0 1.5rem; overflow-wrap: break-word; }
+      .v3 .tagline { font-family: var(--mono); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted); margin: 0 0 1.25rem; }
+      .v3 .hero__lead { font-size: 1.15rem; line-height: 1.6; color: var(--text-2); max-width: 56ch; margin: 0 0 1.5rem; border-left: 2px solid var(--accent); padding-left: 1.25rem; }
+      .v3 .open-to { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: 0 0 2rem; }
+      .v3 .open-to .network-tag { margin: 0; }
+      .v3 .open-to__roles { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; }
+
+      .v3 .portrait { grid-area: portrait; position: relative; margin: 0 40px 0 0; width: 260px; justify-self: end; }
+      .v3 .portrait__frame { position: relative; padding: 6px; border: 1px solid var(--accent); background: var(--accent-tint); }
+      .v3 .portrait__frame img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; }
+      .v3 .corner { position: absolute; width: 12px; height: 12px; border: 2px solid var(--accent); }
+      .v3 .corner--tl { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+      .v3 .corner--tr { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
+      .v3 .corner--bl { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
+      .v3 .corner--br { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+      .v3 .topo { position: absolute; z-index: -1; left: -40px; top: -52px; width: calc(100% + 80px); height: auto; aspect-ratio: 400 / 520; pointer-events: none; overflow: visible; }
+      .v3 .topo__links path { fill: none; stroke: var(--accent-line); stroke-width: 1.25; stroke-dasharray: 4 5; }
+      .v3 .topo__packets circle { fill: var(--accent); }
+      .v3 .topo__nodes rect { fill: var(--bg); stroke: var(--accent-line); stroke-width: 1.25; }
+      .v3 .topo__nodes text { font-family: var(--mono); font-size: 11px; text-anchor: middle; fill: var(--accent); font-weight: 700; }
+      @media (prefers-reduced-motion: reduce) { .v3 .topo__packets { display: none; } }
+
+      .v3 .facts { grid-area: facts; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); }
+      .v3 .fact { padding: 1rem 1.25rem; border-left: 1px solid var(--rule); }
+      .v3 .fact:first-child { border-left: 0; padding-left: 0; }
+      .v3 .fact dt { font-family: var(--mono); font-size: 0.75rem; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
+      .v3 .fact dd { margin: 0; font-weight: 500; font-size: 0.98rem; line-height: 1.4; }
+
+      /* ---------- about ---------- */
+      .v3 .about { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 4rem; align-items: start; padding: 3rem 0 0; }
+      .v3 .about h2.network-tag { font-size: 0.72rem; line-height: 1.6; }
+      .v3 .about__text { font-size: 1.1rem; line-height: 1.7; color: var(--text-2); max-width: 68ch; margin: 0; }
+      .v3 .kv { margin: 0; padding-top: 2.6rem; }
+      .v3 .kv__row { padding: 0.8rem 0; border-top: 1px solid var(--rule); }
+      .v3 .kv__row:last-child { border-bottom: 1px solid var(--rule); }
+      .v3 .kv dt { font-family: var(--mono); font-size: 0.75rem; font-weight: 700; color: var(--accent); margin-bottom: 0.2rem; }
+      .v3 .kv dd { margin: 0; font-weight: 600; line-height: 1.4; }
+
+      /* ---------- section heads ---------- */
+      .v3 .section { padding-top: 6rem; }
+      .v3 .section-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.75rem; }
+      .v3 .section-head h2 { margin: 0; font-family: var(--mono); font-size: clamp(1.35rem, 2.6vw, 1.85rem); font-weight: 700; letter-spacing: 0.06em; line-height: 1.1; }
+      .v3 .section-head__alias { font-family: var(--mono); font-size: 0.9rem; color: var(--muted); }
+      .v3 .shape { flex: none; }
+      .v3 .shape--square { width: 12px; height: 12px; background: var(--accent); }
+      .v3 .shape--circle { width: 12px; height: 12px; background: var(--text); border-radius: 50%; }
+      .v3 .shape--triangle { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 14px solid var(--accent); }
+
+      /* ---------- experience timeline: a dashed "link" with square nodes ---------- */
+      .v3 .timeline { list-style: none; margin: 0; padding: 0; }
+      .v3 .tl-item { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 2rem; }
+      .v3 .tl-item__period { margin: 0; padding-top: 0.2rem; font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--accent); line-height: 1.5; }
+      .v3 .tl-item__period .nowrap { display: block; }
+      .v3 .tl-item__src { display: block; color: var(--muted-2); font-weight: 400; }
+      .v3 .tl-item__body { position: relative; padding: 0 0 3rem 2rem; border-left: 1px dashed var(--rule-strong); }
+      .v3 .tl-item:last-child .tl-item__body { border-left-color: transparent; padding-bottom: 0; }
+      .v3 .tl-item__body::before { content: ""; position: absolute; left: -6px; top: 0.4rem; width: 11px; height: 11px; background: var(--bg); border: 2px solid var(--accent); }
+      .v3 .tl-item:first-child .tl-item__body::before { background: var(--accent); }
+
+      /* ---------- missions ---------- */
+      .v3 .missions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3.5rem 3.5rem; }
+      .v3 .mission { border-top: 1px solid var(--rule-strong); padding-top: 2rem; }
+      .v3 .mission--featured {
+        grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 3.5rem;
+        border-top: 2px solid var(--accent); padding-top: 2.25rem;
+      }
+      .v3 .mission--featured h3 { font-size: 1.65rem; line-height: 1.2; max-width: 30ch; }
+      .v3 .proj-link { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; transition: color 150ms ease, border-color 150ms ease; }
+      .v3 .proj-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+      .v3 .mission__results { border-left: 1px solid var(--rule); padding-left: 2.5rem; align-self: start; }
+      .v3 .results__label { font-family: var(--mono); font-size: 0.75rem; font-weight: 700; color: var(--accent); margin: 0 0 0.75rem; }
+      .v3 .stats { margin: 0; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--rule-strong); }
+      .v3 .stat { padding: 1rem 0.9rem 1rem 0; border-bottom: 1px solid var(--rule); display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 0.2rem; }
+      .v3 .stat:nth-child(even) { padding-left: 1rem; border-left: 1px solid var(--rule); }
+      .v3 .stat dd { margin: 0; font-size: 2.1rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+      .v3 .stat dt { font-size: 0.85rem; line-height: 1.35; color: var(--muted); }
+
+      /* ---------- certs + education ---------- */
+      .v3 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; }
+      .v3 .entries { display: grid; gap: 2.25rem; }
+      .v3 .entry { border-top: 1px solid var(--rule-strong); padding-top: 1.75rem; }
+      .v3 .entry__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+      .v3 .entry .desc { font-size: 0.96rem; }
+      .v3 .badge { flex: none; display: block; }
+      .v3 .badge img { display: block; width: 64px; height: 64px; }
+      .v3 .company--school { color: var(--text); margin-bottom: 1.25rem; }
+      .v3 .degrees { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.5rem; }
+      .v3 .degrees li { padding-left: 1rem; border-left: 1px solid var(--rule-strong); }
+      .v3 .degrees li:first-child { border-left: 2px solid var(--accent); }
+      .v3 .degrees h3 { font-size: 1.1rem; }
+      .v3 .degrees .year { margin-bottom: 0.35rem; }
+
+      /* ---------- skills ---------- */
+      .v3 .stack { margin: 0; border-top: 1px solid var(--rule-strong); }
+      .v3 .stack__row { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 2rem; padding: 1.1rem 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+      .v3 .stack__row dt { font-family: var(--mono); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 0.6rem; }
+      .v3 .stack__row dt::before { content: ""; width: 8px; height: 8px; border: 1.5px solid var(--accent); flex: none; }
+      .v3 .stack__row--core dt { color: var(--accent); }
+      .v3 .stack__row--core dt::before { background: var(--accent); }
+      .v3 .stack__row dd { margin: 0; font-size: 1rem; line-height: 1.7; }
+      .v3 .stack__row--core dd { font-weight: 600; }
+      .v3 .skill__level { font-family: var(--mono); font-size: 0.75rem; font-weight: 400; color: var(--muted-2); }
+
+      /* ---------- contact ---------- */
+      .v3 .uplink { display: grid; grid-template-columns: 1.1fr 1fr; gap: 4rem; align-items: start; }
+      .v3 .uplink__lead { font-size: 1.6rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 1.75rem; max-width: 24ch; }
+      .v3 .contact-list { margin: 0; border-top: 1px solid var(--rule-strong); }
+      .v3 .contact-list > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 1rem; padding: 0.85rem 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+      .v3 .contact-list dt { font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--accent); }
+      .v3 .contact-list dd { margin: 0; font-family: var(--mono); font-size: 0.92rem; font-weight: 700; overflow-wrap: anywhere; }
+      .v3 .contact-list a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+      .v3 .contact-list a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+      .v3 .footer {
+        position: relative; z-index: 1; max-width: var(--maxw); margin: 6rem auto 0; padding: 2rem 4rem;
+        display: flex; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--rule);
+        font-family: var(--mono); font-size: 0.78rem; color: var(--muted);
+      }
+      .v3 .footer__dim { color: var(--accent); }
+      .v3 .footer a { color: var(--muted); text-decoration: none; }
+      .v3 .footer a:hover { color: var(--accent); }
+
+      /* ---------- responsive ---------- */
+      @media (max-width: 1080px) {
+        .v3 .route-table a { padding: 0.45rem 0.4rem; font-size: 0.66rem; letter-spacing: 0.04em; }
+      }
+      @media (max-width: 960px) {
+        .v3 .topbar__inner, .v3 main { padding-left: 2rem; padding-right: 2rem; }
+        .v3 .route-table { display: none; }
+        .v3 .topbar__cv { display: inline-block; margin-left: auto; font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--accent-ink); background: var(--accent); padding: 0.5rem 0.7rem; text-decoration: none; }
+        .v3 .facts { grid-template-columns: 1fr 1fr; }
+        .v3 .fact:nth-child(3) { border-left: 0; padding-left: 0; }
+        .v3 .fact:nth-child(n + 3) { border-top: 1px solid var(--rule); }
+        .v3 .about, .v3 .uplink, .v3 .split { grid-template-columns: 1fr; gap: 2rem; }
+        .v3 .kv { padding-top: 0; }
+        .v3 .split { gap: 0; }
+        .v3 .mission--featured { grid-template-columns: 1fr; gap: 0; }
+        .v3 .mission--featured .mission__main, .v3 .mission--featured .mission__results { display: contents; }
+        .v3 .mission--featured { display: flex; flex-direction: column; }
+        .v3 .mission--featured .network-tag { order: 1; align-self: flex-start; }
+        .v3 .mission--featured .year { order: 2; }
+        .v3 .mission--featured h3 { order: 3; }
+        .v3 .mission--featured .company { order: 4; }
+        .v3 .mission--featured .results__label { order: 5; }
+        .v3 .mission--featured .stats { order: 6; margin-bottom: 1.5rem; }
+        .v3 .mission--featured .desc { order: 7; }
+        .v3 .mission--featured .hl-list { order: 8; }
+        .v3 .mission--featured .more { order: 9; }
+        .v3 .mission--featured .mono-link { order: 10; align-self: flex-start; }
+        .v3 .missions { grid-template-columns: 1fr; gap: 3rem; }
+        .v3 .footer { padding: 2rem; }
+      }
+      @media (max-width: 760px) {
+        body.v3 { font-size: 16px; }
+        .v3 .topbar__inner, .v3 main { padding-left: 1.25rem; padding-right: 1.25rem; }
+        .v3 .topbar__inner { height: 56px; gap: 0.75rem; }
+        .v3 .theme-toggle { width: 36px; height: 36px; }
+        .v3 [id] { scroll-margin-top: 72px; }
+        .v3 .hero { grid-template-columns: minmax(0, 1fr) 96px; grid-template-areas: none; gap: 1.25rem 1rem; padding: 2rem 0 1.5rem; align-items: start; }
+        .v3 .hero__text { display: contents; }
+        .v3 .hero__text > * { grid-column: 1 / -1; }
+        .v3 .node-label { grid-row: 1; margin: 0; font-size: 0.72rem; }
+        .v3 .node-label__node { display: none; }
+        .v3 .hero__text > h1 { grid-row: 2; grid-column: 1; align-self: center; margin: 0; font-size: 2.4rem; }
+        .v3 .portrait { grid-area: auto; grid-row: 2; grid-column: 2; width: 100%; margin: 0; align-self: center; }
+        .v3 .topo { display: none; }
+        .v3 .portrait__frame { padding: 3px; }
+        .v3 .corner { width: 9px; height: 9px; }
+        .v3 .tagline, .v3 .hero__lead, .v3 .open-to { margin: 0; }
+        .v3 .tagline { font-size: 0.8rem; letter-spacing: 0.14em; }
+        .v3 .hero__lead { font-size: 1.02rem; }
+        .v3 .cta-row .bracket-btn { flex: 1 1 auto; justify-content: center; }
+        .v3 .cta-row .bracket-btn--solid { flex-basis: 100%; }
+        .v3 .facts { grid-area: auto; grid-column: 1 / -1; grid-template-columns: 1fr; }
+        .v3 .fact { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 1rem; align-items: baseline; padding: 0.7rem 0; border-left: 0 !important; border-top: 1px solid var(--rule); }
+        .v3 .fact:first-child { border-top: 0; }
+        .v3 .fact dt { margin: 0; }
+        .v3 .section { padding-top: 4rem; }
+        .v3 .section-head { flex-wrap: wrap; gap: 0.4rem 0.75rem; margin-bottom: 2rem; }
+        .v3 .section-head__alias { flex-basis: 100%; font-size: 0.82rem; }
+        .v3 .tl-item { grid-template-columns: 1fr; gap: 0.4rem; border-left: 1px dashed var(--rule-strong); padding-left: 1.5rem; position: relative; padding-bottom: 2.5rem; }
+        .v3 .tl-item:last-child { border-left-color: transparent; padding-bottom: 0; }
+        .v3 .tl-item::before { content: ""; position: absolute; left: -6px; top: 0.3rem; width: 11px; height: 11px; background: var(--bg); border: 2px solid var(--accent); }
+        .v3 .tl-item:first-child::before { background: var(--accent); }
+        .v3 .tl-item__period .nowrap, .v3 .tl-item__src { display: inline; }
+        .v3 .tl-item__src { margin-right: 0.4rem; }
+        .v3 .tl-item__body { border-left: 0; padding: 0; }
+        .v3 .tl-item__body::before { display: none; }
+        .v3 .mission--featured h3 { font-size: 1.35rem; }
+        .v3 .stat dd { font-size: 1.7rem; }
+        .v3 .stack__row { grid-template-columns: 1fr; gap: 0.4rem; }
+        .v3 .uplink__lead { font-size: 1.3rem; }
+        .v3 .uplink .bracket-btn { flex: 1 1 100%; justify-content: center; }
+        .v3 .contact-list > div { grid-template-columns: 96px minmax(0, 1fr); }
+        .v3 .footer { flex-direction: column; padding: 1.5rem 1.25rem; margin-top: 4rem; }
+        .v3 .topbar .brand__cursor { height: 0.95em; }
+      }
+    </style>
+  </body>
+</html>

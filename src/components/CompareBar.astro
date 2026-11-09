@@ -1,0 +1,49 @@
+---
+// Temporary design-review switcher between /before and /after. Remove both routes
+// (and this component) once a direction is chosen.
+export interface Props {
+  current: "before" | "after";
+}
+const { current } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const href = (slug: string) => `${base}/${slug}/`.replace(/\/+/g, "/");
+---
+
+<nav class="compare-bar" aria-label="Design comparison">
+  <span class="compare-bar__label">COMPARE</span>
+  <a href={href("before")} aria-current={current === "before" ? "page" : undefined}>BEFORE</a>
+  <a href={href("after")} aria-current={current === "after" ? "page" : undefined}>AFTER</a>
+</nav>
+
+<style>
+  .compare-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    z-index: 9000;
+    display: flex;
+    align-items: stretch;
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    background: #0b0b10;
+    color: #f5f5f7;
+    border: 1px solid #8b80ff;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  }
+  .compare-bar__label {
+    padding: 9px 12px;
+    color: #8b80ff;
+    border-right: 1px solid #2a2a38;
+  }
+  .compare-bar a {
+    padding: 9px 14px;
+    color: #c9c9d6;
+    text-decoration: none;
+  }
+  .compare-bar a + a { border-left: 1px solid #2a2a38; }
+  .compare-bar a:hover { color: #fff; background: #1a1a24; }
+  .compare-bar a[aria-current="page"] { background: #8b80ff; color: #0b0b10; font-weight: 700; }
+  .compare-bar a:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
+</style>
