@@ -38,7 +38,7 @@ const personLd = {
 };
 
 const sections = [
-  { id: "experience", label: "Experience", alias: "hop_history" },
+  { id: "experience", label: "Experience", short: "Work", alias: "hop_history" },
   { id: "projects", label: "Projects", alias: "mission_log" },
   { id: "education", label: "Education", alias: "training_data" },
   { id: "skills", label: "Skills", alias: "security_stack" },
@@ -63,6 +63,13 @@ const escapeHtml = (t: string) =>
 const METRIC = /(~?\d[\d.]*%|\$\d[\d.]*(?:\/session)?|\d+\+?\s(?:hours|hands-on labs)|\d+-session|\bzero sessions\b|\bsix simultaneously active faults\b)/gi;
 const emph = (t: string) => escapeHtml(t).replace(METRIC, '<strong class="metric">$1</strong>');
 const BULLET_CAP = 4;
+const PROJECT_CAP = 3;
+
+const relocation = cv.location.match(/relocation\s*[-–:]\s*([^)]+)/i)?.[1]?.trim();
+const inProgress = cv.education.find((e) => /expected/i.test(e.period));
+const gradDate = inProgress?.period.match(/expected:?\s*(.+)$/i)?.[1]?.trim();
+const gradMode = inProgress?.degree.split(/\s+[–-]\s+/)[1]?.trim();
+const githubUser = cv.projects.map((pr) => pr.url?.match(/github\.com\/([^/]+)/i)?.[1]).find(Boolean);
 
 const projectHref = (url: string) => (url.startsWith("http") ? url : `https://${url}`);
 const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
@@ -100,7 +107,11 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
           <span class="brand__prompt">~/</span>{firstName.toLowerCase()}<span class="brand__cursor" aria-hidden="true"></span>
         </a>
         <nav class="topnav" aria-label="Sections">
-          {sections.map((s) => <a href={`#${s.id}`} data-nav={s.id}>{s.label}</a>)}
+          {sections.map((s) => (
+            <a href={`#${s.id}`} data-nav={s.id}>
+              {"short" in s && s.short ? (<><span class="l-full">{s.label}</span><span class="l-short" aria-hidden="true">{s.short}</span></>) : s.label}
+            </a>
+          ))}
         </nav>
         <button class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" data-theme-toggle>
           <svg class="icon icon--sun" viewBox="0 0 24 24" aria-hidden="true">
@@ -167,11 +178,11 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
               <circle r="3"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#l3" /></animateMotion></circle>
             </g>
             <g class="topo__nodes">
-              <g transform="translate(24 118)"><rect x="-16" y="-10" width="32" height="20" rx="4" /><text y="3.5">R1</text></g>
-              <g transform="translate(376 34)"><rect x="-16" y="-10" width="32" height="20" rx="4" /><text y="3.5">R2</text></g>
-              <g transform="translate(380 290)"><rect x="-16" y="-10" width="32" height="20" rx="4" /><text y="3.5">R3</text></g>
-              <g transform="translate(22 396)"><rect x="-18" y="-10" width="36" height="20" rx="4" /><text y="3.5">DMZ</text></g>
-              <g transform="translate(322 496)"><rect x="-18" y="-10" width="36" height="20" rx="4" /><text y="3.5">SOC</text></g>
+              <g transform="translate(24 118)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R1</text></g>
+              <g transform="translate(376 34)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R2</text></g>
+              <g transform="translate(380 290)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R3</text></g>
+              <g transform="translate(22 396)"><rect x="-22" y="-11" width="44" height="22" rx="5" /><text y="4">DMZ</text></g>
+              <g transform="translate(322 496)"><rect x="-22" y="-11" width="44" height="22" rx="5" /><text y="4">SOC</text></g>
             </g>
           </svg>
           <div class="portrait__frame">
@@ -219,9 +230,29 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       </section>
 
       <!-- ABOUT -->
-      <section class="about" aria-label="About">
-        <p class="about__label">// about</p>
-        <p class="about__text">{aboutSentences.join(" ")}</p>
+      <section class="about" aria-labelledby="about-h">
+        <div class="about__main">
+          <h2 id="about-h" class="about__label">// about</h2>
+          <p class="about__text">{aboutSentences.join(" ")}</p>
+        </div>
+        <dl class="avail">
+          <div class="avail__row">
+            <dt>Status</dt>
+            <dd><span class="status__dot" aria-hidden="true"></span>Available now · full-time</dd>
+          </div>
+          {relocation && (
+            <div class="avail__row">
+              <dt>Relocation</dt>
+              <dd>Open to {relocation}</dd>
+            </div>
+          )}
+          {gradDate && (
+            <div class="avail__row">
+              <dt>Master's</dt>
+              <dd>Expected {gradDate}{gradMode && <span class="avail__sub">{gradMode.charAt(0).toUpperCase() + gradMode.slice(1)}</span>}</dd>
+            </div>
+          )}
+        </dl>
       </section>
 
       <!-- EXPERIENCE -->
@@ -276,9 +307,22 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
               <h3>{p.name}</h3>
               {p.description && <p class="desc">{p.description}</p>}
               {p.highlights && (
-                <ul class="bullets">
-                  {p.highlights.map((h) => <li set:html={emph(h)} />)}
-                </ul>
+                <>
+                  <ul class="bullets">
+                    {p.highlights.slice(0, PROJECT_CAP).map((h) => <li set:html={emph(h)} />)}
+                  </ul>
+                  {p.highlights.length > PROJECT_CAP && (
+                    <details class="more">
+                      <summary>
+                        <span class="more__open">Show {p.highlights.length - PROJECT_CAP} more</span>
+                        <span class="more__close">Show less</span>
+                      </summary>
+                      <ul class="bullets">
+                        {p.highlights.slice(PROJECT_CAP).map((h) => <li set:html={emph(h)} />)}
+                      </ul>
+                    </details>
+                  )}
+                </>
               )}
               <div class="project__foot">
                 <ul class="chips" aria-label="Tools used">
@@ -305,18 +349,16 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         <div class="edu-split">
           <div>
             <h3 class="sub-h">Degrees</h3>
-            <ol class="timeline timeline--compact">
+            <div class="certs">
               {cv.education.map((e) => (
-                <li class="tl-item">
-                  <div class="tl-item__meta"><span class="tl-item__period">{e.period}</span></div>
-                  <div class="tl-item__body">
-                    <h3>{e.degree}</h3>
-                    <p class="org"><strong>{e.institution}</strong></p>
-                    {e.detail && <p class="desc">{e.detail}</p>}
-                  </div>
-                </li>
+                <article class="card edu">
+                  <span class="card__date">{e.period}</span>
+                  <h3>{e.degree}</h3>
+                  <p class="org"><strong>{e.institution}</strong></p>
+                  {e.detail && <p class="desc desc--sm">{e.detail}</p>}
+                </article>
               ))}
-            </ol>
+            </div>
           </div>
           <div>
             <h3 class="sub-h" id="certifications">Certifications</h3>
@@ -388,16 +430,18 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
             </div>
           </div>
           <ul class="contact__list">
-            {cv.contact.map((c) => (
+            {cv.contact.filter((c) => !c.href.startsWith("mailto:")).map((c) => (
               <li>
                 <span class="contact__key">{c.label}</span>
                 <a href={c.href} {...(c.href.startsWith("http") ? { target: "_blank", rel: "noopener" } : {})}>{c.value}</a>
               </li>
             ))}
-            <li>
-              <span class="contact__key">Résumé</span>
-              <a href={resumeHref} target="_blank" rel="noopener">resume.pdf</a>
-            </li>
+            {githubUser && (
+              <li>
+                <span class="contact__key">GitHub</span>
+                <a href={`https://github.com/${githubUser}`} target="_blank" rel="noopener">github.com/{githubUser}</a>
+              </li>
+            )}
           </ul>
         </div>
       </section>
@@ -534,6 +578,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         transition: color 150ms ease, background-color 150ms ease;
       }
       .v3 .topnav a:hover { color: var(--text); background: var(--accent-soft); }
+      .v3 .topnav .l-short { display: none; }
       .v3 .topnav a[aria-current] { color: var(--accent); background: var(--accent-soft); }
       .v3 .theme-toggle {
         width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center;
@@ -573,7 +618,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .status {
         display: inline-flex; align-items: center; gap: 0.6rem; margin: 0 0 1.75rem;
         padding: 0.35rem 0.85rem 0.35rem 0.7rem;
-        font-family: var(--mono); font-size: 0.78rem; color: var(--text-2);
+        font-family: var(--mono); font-size: 0.82rem; color: var(--text-2);
         background: var(--surface); border: 1px solid var(--rule); border-radius: 999px;
       }
       .v3 .status__dot {
@@ -624,7 +669,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .corner--br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
       .v3 .portrait__caption {
         display: flex; justify-content: space-between; margin-top: 0.7rem;
-        font-family: var(--mono); font-size: 0.72rem; color: var(--muted);
+        font-family: var(--mono); font-size: 0.8rem; color: var(--muted);
       }
       .v3 .portrait__ok { color: var(--ok); }
 
@@ -647,11 +692,11 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .topo__links path { fill: none; stroke: var(--accent-line); stroke-width: 1.25; stroke-dasharray: 4 5; }
       .v3 .topo__packets circle { fill: var(--accent); }
       .v3 .topo__nodes rect { fill: var(--surface); stroke: var(--accent-line); stroke-width: 1.25; }
-      .v3 .topo__nodes text { font-family: var(--mono); font-size: 9px; text-anchor: middle; fill: var(--accent); font-weight: 700; }
+      .v3 .topo__nodes text { font-family: var(--mono); font-size: 11px; text-anchor: middle; fill: var(--accent); font-weight: 700; }
       @media (prefers-reduced-motion: reduce) { .v3 .topo__packets { display: none; } }
 
       .v3 .targets { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: -1rem 0 2.25rem; }
-      .v3 .targets__label { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+      .v3 .targets__label { font-family: var(--mono); font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
       .v3 .targets ul { display: contents; list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
       .v3 .targets li {
         font-size: 0.9rem; font-weight: 600; color: var(--accent);
@@ -674,8 +719,13 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .more > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
 
       /* ---------- about ---------- */
-      .v3 .about { padding: 2.5rem 0 1rem; max-width: 760px; }
-      .v3 .about__label { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); margin: 0 0 0.75rem; }
+      .v3 .about { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 3.5rem; align-items: start; padding: 2.5rem 0 0; }
+      .v3 .about__label { font-family: var(--mono); font-size: 0.85rem; font-weight: 400; letter-spacing: 0; color: var(--accent); margin: 0 0 0.75rem; }
+      .v3 .avail { margin: 0; border-left: 2px solid var(--accent); padding: 0.25rem 0 0.25rem 1.5rem; display: grid; gap: 1.1rem; }
+      .v3 .avail dt { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem; }
+      .v3 .avail dd { margin: 0; font-weight: 600; font-size: 1.05rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.5rem; }
+      .v3 .avail .status__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+      .v3 .avail__sub { flex-basis: 100%; font-weight: 400; font-size: 0.92rem; color: var(--muted); }
       .v3 .about__text { font-size: 1.15rem; line-height: 1.75; color: var(--text-2); margin: 0; text-wrap: pretty; }
 
       /* ---------- sections ---------- */
@@ -690,7 +740,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       }
       .v3 .section__num::before { content: "0x"; opacity: 0.6; }
       .v3 h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0; font-weight: 700; }
-      .v3 .section__alias { margin-left: auto; font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+      .v3 .section__alias { margin-left: auto; font-family: var(--mono); font-size: 0.82rem; color: var(--muted); }
       .v3 .section__alias::before { content: "// "; color: var(--accent); }
 
       .v3 h3 { font-size: 1.25rem; line-height: 1.3; letter-spacing: -0.01em; font-weight: 600; margin: 0 0 0.35rem; text-wrap: balance; }
@@ -709,7 +759,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
 
       /* timeline */
       .v3 .timeline { list-style: none; margin: 0; padding: 0; position: relative; }
-      .v3 .tl-item { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 2.5rem; position: relative; padding-bottom: 3rem; }
+      .v3 .tl-item { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 2rem; position: relative; padding-bottom: 3rem; }
       .v3 .tl-item:last-child { padding-bottom: 0; }
       .v3 .tl-item__body { position: relative; padding-left: 2rem; border-left: 1px solid var(--rule); }
       .v3 .tl-item:last-child .tl-item__body { border-left-color: transparent; }
@@ -719,19 +769,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         background: var(--bg); border: 2px solid var(--accent);
       }
       .v3 .tl-item:first-child .tl-item__body::before { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
-      .v3 .tl-item__period { display: block; padding-top: 0.25rem; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
-      .v3 .timeline--compact .tl-item { grid-template-columns: 1fr; gap: 0.35rem; padding-bottom: 2rem; }
-      .v3 .timeline--compact .tl-item__meta { padding-left: 2rem; order: 0; }
-      .v3 .timeline--compact .tl-item { border-left: 1px solid var(--rule); }
-      .v3 .timeline--compact .tl-item:last-child { border-left-color: transparent; }
-      .v3 .timeline--compact .tl-item__body { border-left: 0; }
-      .v3 .timeline--compact .tl-item__body::before { display: none; }
-      .v3 .timeline--compact .tl-item::before {
-        content: ""; position: absolute; left: -6px; top: 0.4rem;
-        width: 11px; height: 11px; border-radius: 50%; background: var(--bg); border: 2px solid var(--accent);
-      }
-      .v3 .timeline--compact .tl-item__period { padding-top: 0; }
-      .v3 .timeline--compact h3 { font-size: 1.1rem; }
+      .v3 .tl-item__period { display: block; padding-top: 0.25rem; font-family: var(--mono); font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
 
       /* cards */
       .v3 .card {
@@ -740,17 +778,20 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         transition: border-color 200ms ease, transform 200ms ease;
       }
       .v3 .card:hover { border-color: var(--accent-line); }
-      .v3 .card__date { display: block; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); margin-bottom: 0.6rem; }
+      .v3 .card__date { display: block; font-family: var(--mono); font-size: 0.82rem; color: var(--muted); margin-bottom: 0.6rem; }
       .v3 .projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
       .v3 .project { display: flex; flex-direction: column; }
       .v3 .project h3 { margin-bottom: 0.9rem; }
       .v3 .project .bullets { margin-bottom: 1.5rem; }
       .v3 .project__foot { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1.25rem; border-top: 1px dashed var(--rule); }
-      .v3 .project--featured { grid-column: 1 / -1; padding: 2.25rem; border-color: var(--accent-line); }
+      .v3 .project--featured {
+        grid-column: 1 / -1; padding: 2.5rem; border-color: var(--accent-line);
+        background: radial-gradient(90% 120% at 100% 0%, var(--accent-soft), transparent 60%), var(--surface);
+      }
       .v3 .project--featured::before {
         content: ""; position: absolute; left: -1px; top: 24px; bottom: 24px; width: 3px; background: var(--accent); border-radius: 3px;
       }
-      .v3 .project--featured h3 { font-size: 1.55rem; max-width: 34ch; }
+      .v3 .project--featured h3 { font-size: 1.75rem; line-height: 1.2; max-width: 32ch; }
       .v3 .project--featured .bullets { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem 2.5rem; }
       .v3 .project__flag {
         align-self: flex-start; margin-bottom: 0.9rem;
@@ -760,13 +801,13 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
 
       .v3 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.45rem; }
       .v3 .chip {
-        font-family: var(--mono); font-size: 0.78rem; line-height: 1; color: var(--text-2);
+        font-family: var(--mono); font-size: 0.8rem; line-height: 1; color: var(--text-2);
         padding: 0.45rem 0.6rem; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg);
       }
       .v3 .chip--lg { font-family: var(--sans); font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; }
 
       .v3 .text-link {
-        font-family: var(--mono); font-size: 0.8rem; color: var(--accent); text-decoration: none;
+        font-family: var(--mono); font-size: 0.85rem; color: var(--accent); text-decoration: none;
         border-bottom: 1px solid var(--accent-line); padding-bottom: 1px; overflow-wrap: anywhere;
       }
       .v3 .text-link:hover { border-bottom-color: var(--accent); }
@@ -774,8 +815,8 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       /* education / certs */
       .v3 .edu-split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 3.5rem; align-items: start; }
       .v3 .sub-h {
-        font-family: var(--mono); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-        color: var(--muted); margin: 0 0 1.5rem;
+        font-family: var(--mono); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--muted); margin: 0 0 1.25rem;
       }
       .v3 .certs { display: grid; gap: 1.25rem; }
       .v3 .cert { padding: 1.5rem; }
@@ -790,10 +831,8 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .skills { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
       .v3 .skill-row { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 1.5rem; align-items: center; padding: 1.1rem 1.5rem; border-top: 1px solid var(--rule); }
       .v3 .skill-row:first-child { border-top: 0; }
-      .v3 .skill-row h3 {
-        font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
-        color: var(--accent); font-weight: 700; margin: 0;
-      }
+      .v3 .skill-row h3 { font-size: 1rem; font-weight: 600; color: var(--text); margin: 0; display: flex; align-items: center; gap: 0.6rem; }
+      .v3 .skill-row h3::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--accent); flex: none; }
 
       /* contact */
       .v3 .contact__panel {
@@ -814,7 +853,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .contact__list { list-style: none; margin: 0; padding: 0; display: grid; }
       .v3 .contact__list li { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
       .v3 .contact__list li:last-child { border-bottom: 0; }
-      .v3 .contact__key { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+      .v3 .contact__key { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
       .v3 .contact__list a { color: var(--text); text-decoration: none; font-weight: 500; overflow-wrap: anywhere; }
       .v3 .contact__list a:hover { color: var(--accent); }
 
@@ -833,6 +872,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         .v3 .fact:nth-child(3) { border-left: 0; }
         .v3 .fact:nth-child(n + 3) { border-top: 1px solid var(--rule); }
         .v3 .edu-split { grid-template-columns: 1fr; }
+        .v3 .about { grid-template-columns: 1fr; gap: 2rem; }
         .v3 .project--featured .bullets { grid-template-columns: 1fr; }
       }
       @media (max-width: 760px) {
@@ -845,8 +885,10 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
           overflow-x: auto; scrollbar-width: none;
         }
         .v3 .topnav::-webkit-scrollbar { display: none; }
-        .v3 .topnav a { white-space: nowrap; padding: 0.35rem 0.55rem; font-size: 0.84rem; }
-        .v3 .topnav { mask-image: linear-gradient(90deg, #000 85%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); padding-right: 2.5rem; }
+        .v3 .topnav a { white-space: nowrap; padding: 0.35rem 0.5rem; font-size: 0.86rem; }
+        .v3 .topnav { justify-content: space-between; padding: 0 0.75rem 0.55rem; }
+        .v3 .topnav .l-full { display: none; }
+        .v3 .topnav .l-short { display: inline; }
         .v3 [id] { scroll-margin-top: 110px; }
         .v3 .hero {
           grid-template-columns: minmax(0, 1fr) 92px;
@@ -854,6 +896,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
           gap: 1.25rem 1rem; padding: 2rem 0 2rem; align-items: start;
         }
         .v3 .topo { display: none; }
+        .v3 .hero__grid-bg { inset: 0 -1.25rem; }
         .v3 .hero__text { display: contents; }
         .v3 .status { grid-area: auto; grid-row: 1; grid-column: 1 / -1; justify-self: start; margin: 0; font-size: 0.75rem; }
         .v3 .hero__text > h1 { grid-row: 2; grid-column: 1; align-self: center; margin: 0; font-size: 2.35rem; }
@@ -861,6 +904,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         .v3 .facts { grid-area: auto; grid-column: 1 / -1; }
         .v3 .hero__text > :not(.status):not(h1) { grid-column: 1 / -1; }
         .v3 .targets { margin: 0; }
+        .v3 .targets li { font-size: 0.85rem; padding: 0.25rem 0.6rem; }
         .v3 h1 { margin-bottom: 0.75rem; }
         .v3 .hero__tagline { font-size: 1.05rem; margin: 0; }
         .v3 .portrait__frame { padding: 4px; }
@@ -869,11 +913,16 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         .v3 .btn { height: 44px; padding: 0 0.95rem; font-size: 0.93rem; }
         .v3 .btn--primary { flex-basis: 100%; justify-content: center; }
         .v3 .cta-row .btn:not(.btn--primary) { flex: 1; justify-content: center; }
-        .v3 .facts { grid-template-columns: 1fr 1fr; }
-        .v3 .fact { padding: 0.9rem 1rem; }
+        .v3 .facts { grid-template-columns: 1fr; }
+        .v3 .fact { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 1rem; align-items: baseline; padding: 0.8rem 1rem; border-left: 0 !important; border-top: 1px solid var(--rule); }
+        .v3 .fact:first-child { border-top: 0; }
+        .v3 .fact dt { margin: 0; }
+        .v3 .fact dd { font-size: 0.92rem; }
         .v3 .section { padding-top: 3.5rem; }
         .v3 .section__alias { display: none; }
-        .v3 .tl-item { grid-template-columns: 1fr; gap: 0.35rem; }
+        .v3 .tl-item { grid-template-columns: 1fr; gap: 0.35rem; padding-bottom: 2.25rem; }
+        .v3 .project--featured h3 { font-size: 1.35rem; }
+        .v3 .about { padding-top: 2rem; }
         .v3 .tl-item__meta { padding-left: 1.5rem; }
         .v3 .tl-item__body { padding-left: 1.5rem; }
         .v3 .tl-item { border-left: 1px solid var(--rule); }
@@ -885,7 +934,6 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
           width: 11px; height: 11px; border-radius: 50%; background: var(--bg); border: 2px solid var(--accent);
         }
         .v3 .timeline .tl-item:first-child::before { background: var(--accent); }
-        .v3 .timeline--compact .tl-item__meta { padding-left: 1.5rem; }
         .v3 .projects { grid-template-columns: 1fr; }
         .v3 .card, .v3 .project--featured { padding: 1.35rem; }
         .v3 .project--featured h3 { font-size: 1.3rem; }
