@@ -96,7 +96,6 @@ const splitLevel = (item: string) => {
   const name = (m ? m[1] : item).trim();
   return { name: name.charAt(0).toUpperCase() + name.slice(1), level: m?.[2]?.toLowerCase() };
 };
-const isCoreGroup = (heading: string) => /cybersecurity|security tools/i.test(heading);
 
 const eduGroups = [
   ...cv.education.reduce((m, e) => m.set(e.institution, [...(m.get(e.institution) ?? []), e]), new Map<string, Education[]>()),
@@ -416,7 +415,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
         </div>
         <dl class="stack">
           {techSkills.map((g) => (
-            <div class:list={["stack__row", { "stack__row--core": isCoreGroup(g.heading) }]}>
+            <div class="stack__row">
               <dt>{g.heading}</dt>
               <dd>
                 {g.items.map((item, i) => {
@@ -782,10 +781,7 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
       .v3 .stack__row { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 2rem; padding: 1.1rem 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
       .v3 .stack__row dt { font-family: var(--mono); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 0.6rem; }
       .v3 .stack__row dt::before { content: ""; width: 8px; height: 8px; border: 1.5px solid var(--accent); flex: none; }
-      .v3 .stack__row--core dt { color: var(--accent); }
-      .v3 .stack__row--core dt::before { background: var(--accent); }
       .v3 .stack__row dd { margin: 0; font-size: 1rem; line-height: 1.7; }
-      .v3 .stack__row--core dd { font-weight: 600; }
       .v3 .skill__level { font-family: var(--mono); font-size: 0.75rem; font-weight: 400; color: var(--muted-2); }
 
       /* ---------- contact ---------- */
