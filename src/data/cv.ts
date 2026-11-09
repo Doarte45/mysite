@@ -13,6 +13,11 @@ export interface Experience {
   readonly highlights: readonly string[];
 }
 
+export interface Metric {
+  readonly value: string; // copied verbatim from the source, e.g. "~97%"
+  readonly label: string; // e.g. "Effective fault resolution rate"
+}
+
 export interface Project {
   readonly name: string;
   readonly year: string;
@@ -20,6 +25,8 @@ export interface Project {
   readonly highlights?: readonly string[];
   readonly stack: readonly string[];
   readonly url?: string;
+  readonly featured?: boolean; // extracted by sync-cv; at most one project
+  readonly metrics?: readonly Metric[]; // extracted by sync-cv; up to 4 headline numbers
 }
 
 export interface Education {
@@ -48,6 +55,10 @@ export interface CV {
   readonly role: string;
   readonly tagline: string;
   readonly location: string;
+  // Site fields extracted by sync-cv (optional so older cv.json files still load).
+  readonly targetRoles?: readonly string[];
+  readonly relocation?: string;
+  readonly availability?: string;
   readonly contact: readonly ContactLink[];
   readonly summary: string;
   readonly experience: readonly Experience[];
