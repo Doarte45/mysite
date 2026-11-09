@@ -207,21 +207,22 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
         <figure class="portrait">
           <svg class="topo" viewBox="0 0 400 520" aria-hidden="true">
             <g class="topo__links">
-              <path id="l1" d="M24 118 L24 34 L376 34" />
-              <path id="l3" d="M376 34 L380 290" /><path id="l4" d="M380 290 L322 496" />
-              <path id="l5" d="M24 118 L22 396" /><path id="l6" d="M22 396 L22 496 L322 496" />
+              <path id="l1" d="M22 120 L22 36 L378 36" />
+              <path id="l3" d="M378 36 L378 260" /><path id="l4" d="M378 260 L378 464" />
+              <path id="l5" d="M22 120 L22 390" /><path id="l6" d="M22 390 L22 464 L378 464" />
             </g>
             <g class="topo__packets">
               <circle r="3"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#l1" /></animateMotion></circle>
               <circle r="3"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#l5" /></animateMotion></circle>
               <circle r="3"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#l3" /></animateMotion></circle>
+              <circle r="3"><animateMotion dur="7s" repeatCount="indefinite"><mpath href="#l6" /></animateMotion></circle>
             </g>
             <g class="topo__nodes">
-              <g transform="translate(24 118)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R1</text></g>
-              <g transform="translate(376 34)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R2</text></g>
-              <g transform="translate(380 290)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R3</text></g>
-              <g transform="translate(22 396)"><rect x="-22" y="-11" width="44" height="22" rx="5" /><text y="4">DMZ</text></g>
-              <g transform="translate(322 496)"><rect x="-22" y="-11" width="44" height="22" rx="5" /><text y="4">SOC</text></g>
+              <g transform="translate(22 120)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R1</text></g>
+              <g transform="translate(378 36)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R2</text></g>
+              <g transform="translate(378 260)"><rect x="-19" y="-11" width="38" height="22" rx="5" /><text y="4">R3</text></g>
+              <g transform="translate(22 390)"><rect x="-22" y="-11" width="44" height="22" rx="5" /><text y="4">DMZ</text></g>
+              <g transform="translate(378 464)"><rect x="-22" y="-11" width="44" height="22" rx="5" /><text y="4">SOC</text></g>
             </g>
           </svg>
           <div class="portrait__frame">
