@@ -79,6 +79,17 @@ const extractStats = (lines: readonly string[] = []) => {
   return out.slice(0, 4);
 };
 
+const abbr = (inst: string) => inst.match(/\(([^)]+)\)\s*$/)?.[1] ?? inst;
+const securityTools = cv.skills.find((g) => /security tools/i.test(g.heading))?.items ?? [];
+const highlights = [
+  ...cv.education.slice(0, 1).map((e) => ({ k: "Degree", v: `${e.degree.split(/,|\s+[–-]\s+/)[0]} · ${abbr(e.institution)}` })),
+  ...cv.certifications.map((c) => ({ k: "Certified", v: c.name.replace(/\s*Certification$/i, "") })),
+  ...(securityTools.length ? [{ k: "Tools", v: securityTools.slice(0, 3).map((t) => t.replace(/\s*\(.*\)$/, "")).join(" · ") }] : []),
+];
+
+const contactDisplay = (label: string, value: string) =>
+  /linkedin/i.test(label) ? "View profile" : value;
+
 const eduGroups = [
   ...cv.education.reduce(
     (m, e) => m.set(e.institution, [...(m.get(e.institution) ?? []), e]),
@@ -257,6 +268,11 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
           <h2 id="about-h" class="about__label">// about</h2>
           <p class="about__text">{aboutSentences.join(" ")}</p>
         </div>
+        <ul class="about__hl" aria-label="Highlights">
+          {highlights.map((h) => (
+            <li><span class="about__hl-k">{h.k}</span><span class="about__hl-v">{h.v}</span></li>
+          ))}
+        </ul>
       </section>
 
       <!-- EXPERIENCE -->
@@ -270,7 +286,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
           {cv.experience.map((exp) => (
             <li class="tl-item">
               <div class="tl-item__meta">
-                <span class="tl-item__period">{exp.period}</span>
+                <span class="tl-item__period">{exp.period.split(/\s+[–-]\s+/).map((part, j, all) => <span class="nowrap">{part}{j < all.length - 1 ? " –" : ""}</span>)}</span>
               </div>
               <div class="tl-item__body">
                 <h3>{exp.role}</h3>
@@ -477,13 +493,13 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
             {cv.contact.filter((c) => !c.href.startsWith("mailto:")).map((c) => (
               <li>
                 <span class="contact__key">{c.label}</span>
-                <a href={c.href} {...(c.href.startsWith("http") ? { target: "_blank", rel: "noopener" } : {})}>{c.value}</a>
+                <a href={c.href} {...(c.href.startsWith("http") ? { target: "_blank", rel: "noopener" } : {})}>{contactDisplay(c.label, c.value)} <span aria-hidden="true">↗</span></a>
               </li>
             ))}
             {githubUser && (
               <li>
                 <span class="contact__key">GitHub</span>
-                <a href={`https://github.com/${githubUser}`} target="_blank" rel="noopener">github.com/{githubUser}</a>
+                <a href={`https://github.com/${githubUser}`} target="_blank" rel="noopener">@{githubUser} <span aria-hidden="true">↗</span></a>
               </li>
             )}
           </ul>
@@ -550,7 +566,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         --accent-soft: rgba(67, 56, 202, 0.08);
         --accent-line: rgba(67, 56, 202, 0.22);
         --rule: #e6e6ee;
-        --ok: #15803d;
+        --ok: #0f766e;
         --accent-2: #0f766e;
         --accent-2-soft: rgba(15, 118, 110, 0.12);
         --shadow: 0 1px 2px rgba(16, 16, 40, 0.04), 0 8px 24px -12px rgba(16, 16, 40, 0.12);
@@ -577,7 +593,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         --accent-soft: rgba(157, 148, 255, 0.1);
         --accent-line: rgba(157, 148, 255, 0.28);
         --rule: #23232e;
-        --ok: #4ade80;
+        --ok: #2dd4bf;
         --accent-2: #2dd4bf;
         --accent-2-soft: rgba(45, 212, 191, 0.14);
         --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
@@ -654,7 +670,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         grid-template-areas: "text portrait" "facts facts";
         gap: 3rem 4rem;
         align-items: center;
-        padding: 5.5rem 0 3.5rem;
+        padding: 5rem 0 2rem;
       }
       .v3 .hero__grid-bg {
         position: absolute; inset: 0 -2rem; z-index: -1; pointer-events: none;
@@ -696,6 +712,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       }
       .v3 .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
       .v3 .btn {
+        white-space: nowrap;
         display: inline-flex; align-items: center; gap: 0.55rem;
         height: 46px; padding: 0 1.15rem; border-radius: 10px;
         font-size: 0.98rem; font-weight: 600; text-decoration: none;
@@ -742,13 +759,13 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .portrait { position: relative; }
       .v3 .topo { position: absolute; z-index: -1; left: -40px; top: -52px; width: calc(100% + 80px); height: auto; aspect-ratio: 400 / 520; pointer-events: none; overflow: visible; }
       .v3 .topo__links path { fill: none; stroke: var(--accent-line); stroke-width: 1.25; stroke-dasharray: 4 5; }
-      .v3 .topo__packets circle { fill: var(--accent); }
+      .v3 .topo__packets circle { fill: var(--accent-2); }
       .v3 .topo__nodes rect { fill: var(--surface); stroke: var(--accent-line); stroke-width: 1.25; }
       .v3 .topo__nodes text { font-family: var(--mono); font-size: 11px; text-anchor: middle; fill: var(--accent); font-weight: 700; }
       @media (prefers-reduced-motion: reduce) { .v3 .topo__packets { display: none; } }
 
       .v3 .targets { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: -1rem 0 2.25rem; }
-      .v3 .targets__label { font-family: var(--mono); font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+      .v3 .targets__label { font-family: var(--mono); font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); }
       .v3 .targets ul { display: contents; list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
       .v3 .targets li {
         font-size: 0.9rem; font-weight: 600; color: var(--accent);
@@ -771,7 +788,11 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .more > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
 
       /* ---------- about ---------- */
-      .v3 .about { padding: 3rem 0 0; max-width: 72ch; }
+      .v3 .about { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 3.5rem; align-items: start; padding: 2.5rem 0 0; }
+      .v3 .about__hl { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--accent); display: grid; gap: 0.9rem; padding-left: 1.5rem; }
+      .v3 .about__hl li { display: grid; gap: 0.1rem; }
+      .v3 .about__hl-k { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+      .v3 .about__hl-v { font-weight: 600; font-size: 1.02rem; line-height: 1.4; }
       .v3 .about__label { font-family: var(--mono); font-size: 0.85rem; font-weight: 400; letter-spacing: 0; color: var(--accent); margin: 0 0 0.75rem; }
       .v3 .avail { margin: 0; border-left: 2px solid var(--accent); padding: 0.25rem 0 0.25rem 1.5rem; display: grid; gap: 1.1rem; }
       .v3 .avail dt { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem; }
@@ -792,7 +813,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       }
       .v3 .section__num::before { content: "0x"; opacity: 0.6; }
       .v3 h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0; font-weight: 700; }
-      .v3 .section__alias { margin-left: auto; font-family: var(--mono); font-size: 0.82rem; color: var(--muted); }
+      .v3 .section__alias { margin-left: auto; font-family: var(--mono); font-size: 0.85rem; color: var(--text-2); }
       .v3 .section__alias::before { content: "// "; color: var(--accent); }
 
       .v3 h3 { font-size: 1.3rem; line-height: 1.3; letter-spacing: -0.01em; font-weight: 600; margin: 0 0 0.35rem; text-wrap: balance; }
@@ -821,6 +842,8 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         background: var(--bg); border: 2px solid var(--accent);
       }
       .v3 .tl-item:first-child .tl-item__body::before { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+      .v3 .nowrap { white-space: nowrap; }
+      .v3 .tl-item__period .nowrap { display: block; }
       .v3 .tl-item__period { display: block; padding-top: 0.25rem; font-family: var(--mono); font-size: 0.875rem; color: var(--muted); line-height: 1.5; }
 
       /* cards */
@@ -831,7 +854,8 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       }
       .v3 .card:hover { border-color: var(--accent-line); }
       .v3 .card__date { display: block; font-family: var(--mono); font-size: 0.875rem; color: var(--muted); margin-bottom: 0.6rem; }
-      .v3 .projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+      .v3 .projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; align-items: start; }
+      .v3 .project:not(.project--featured) .project__foot { margin-top: 1.25rem; }
       .v3 .project { display: flex; flex-direction: column; }
       .v3 .project h3 { margin-bottom: 0.9rem; }
       .v3 .project .bullets { margin-bottom: 1.5rem; }
@@ -846,7 +870,10 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .project--featured h3 { font-size: 1.75rem; line-height: 1.2; max-width: 32ch; }
       .v3 .project--featured { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 2.5rem; align-items: start; }
       .v3 .project__main { display: flex; flex-direction: column; }
-      .v3 .project__side { display: flex; flex-direction: column; gap: 1.25rem; }
+      .v3 .project__side { display: flex; flex-direction: column; gap: 1.25rem; position: sticky; top: 6rem; }
+      .v3 .project--featured { align-items: stretch; }
+      .v3 .project--featured .project__side { align-self: start; }
+      .v3 .project--featured .metric { background: none; }
       .v3 .project__side .project__foot { margin-top: 0; border-top: 0; padding-top: 0; flex-direction: column; align-items: flex-start; }
       .v3 .project__side .stats { margin: 0; grid-template-columns: 1fr 1fr; }
       .v3 .project__side .stat:nth-child(3) { border-left: 0; }
@@ -924,9 +951,9 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .contact__list { list-style: none; margin: 0; padding: 0; display: grid; }
       .v3 .contact__list li { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
       .v3 .contact__list li:last-child { border-bottom: 0; }
-      .v3 .contact__key { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-      .v3 .contact__list a { color: var(--text); text-decoration: none; font-weight: 500; overflow-wrap: anywhere; }
-      .v3 .contact__list a:hover { color: var(--accent); }
+      .v3 .contact__key { font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+      .v3 .contact__list a { color: var(--accent); text-decoration: none; font-weight: 600; overflow-wrap: anywhere; border-bottom: 1px solid var(--accent-line); }
+      .v3 .contact__list a:hover { border-bottom-color: var(--accent); }
 
       .v3 .footer {
         max-width: var(--maxw); margin: 5rem auto 0; padding: 2rem; border-top: 1px solid var(--rule);
@@ -944,6 +971,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         .v3 .fact:nth-child(n + 3) { border-top: 1px solid var(--rule); }
         .v3 .edu-split { grid-template-columns: 1fr; }
         .v3 .about { grid-template-columns: 1fr; gap: 2rem; }
+        .v3 .project__side { position: static; }
         .v3 .stats { grid-template-columns: 1fr 1fr; }
         .v3 .project--featured { grid-template-columns: 1fr; gap: 1.5rem; }
         .v3 .hero { grid-template-columns: minmax(0, 1fr) 300px; }
@@ -1021,7 +1049,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         .v3 .card, .v3 .project--featured { padding: 1.35rem; }
         .v3 .project--featured h3 { font-size: 1.3rem; }
         .v3 .skill-row { grid-template-columns: 1fr; gap: 0.7rem; padding: 1rem 1.15rem; }
-        .v3 .cta-row--contact .btn { flex: 1 1 auto; justify-content: center; }
+        .v3 .cta-row--contact .btn { flex: 1 1 100%; justify-content: center; }
         .v3 .contact__panel { grid-template-columns: 1fr; padding: 1.5rem; gap: 1.5rem; }
         .v3 .contact__lead { font-size: 1.25rem; }
         .v3 .footer { padding: 1.5rem 1.25rem; margin-top: 3.5rem; }
