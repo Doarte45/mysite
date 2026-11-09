@@ -279,14 +279,13 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
                 <h3>{exp.role}</h3>
                 <p class="company">{exp.company} — {exp.location}</p>
                 {exp.summary && <p class="desc">{exp.summary}</p>}
-                <ul class="hl-list">
-                  {exp.highlights.slice(0, BULLET_CAP).map((h) => <li set:html={emph(h)} />)}
+                <ul class="hl-list" data-cap={BULLET_CAP}>
+                  {exp.highlights.map((h) => <li set:html={emph(h)} />)}
                 </ul>
                 {exp.highlights.length > BULLET_CAP && (
-                  <details class="more">
-                    <summary><span class="more__open">show {exp.highlights.length - BULLET_CAP} more</span><span class="more__close">show less</span></summary>
-                    <ul class="hl-list">{exp.highlights.slice(BULLET_CAP).map((h) => <li set:html={emph(h)} />)}</ul>
-                  </details>
+                  <button type="button" class="more" data-more hidden aria-expanded="false">
+                    <span class="more__open">show {exp.highlights.length - BULLET_CAP} more</span><span class="more__close">show less</span>
+                  </button>
                 )}
               </div>
             </li>
@@ -317,12 +316,11 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
                   {p.description && <p class="desc">{p.description}</p>}
                   {p.highlights && (
                     <>
-                      <ul class="hl-list">{p.highlights.slice(0, cap).map((h) => <li set:html={emph(h)} />)}</ul>
+                      <ul class="hl-list" data-cap={cap}>{p.highlights.map((h) => <li set:html={emph(h)} />)}</ul>
                       {p.highlights.length > cap && (
-                        <details class="more">
-                          <summary><span class="more__open">show {p.highlights.length - cap} more</span><span class="more__close">show less</span></summary>
-                          <ul class="hl-list">{p.highlights.slice(cap).map((h) => <li set:html={emph(h)} />)}</ul>
-                        </details>
+                        <button type="button" class="more" data-more hidden aria-expanded="false">
+                          <span class="more__open">show {p.highlights.length - cap} more</span><span class="more__close">show less</span>
+                        </button>
                       )}
                     </>
                   )}
@@ -486,6 +484,21 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
         apply(next);
       });
 
+      // Collapse long bullet lists; the toggle sits after the list. Without JS every bullet stays visible.
+      document.querySelectorAll<HTMLButtonElement>("[data-more]").forEach((btn) => {
+        const list = btn.previousElementSibling as HTMLElement | null;
+        const cap = Number(list?.dataset.cap);
+        if (!list || !cap) return;
+        const extras = [...list.children].slice(cap) as HTMLElement[];
+        const set = (open: boolean) => {
+          extras.forEach((li) => (li.hidden = !open));
+          btn.setAttribute("aria-expanded", String(open));
+        };
+        set(false);
+        btn.hidden = false;
+        btn.addEventListener("click", () => set(btn.getAttribute("aria-expanded") !== "true"));
+      });
+
       // Route-table scroll-spy.
       const links = new Map([...document.querySelectorAll<HTMLAnchorElement>("[data-nav]")].map((a) => [a.dataset.nav!, a]));
       const io = new IntersectionObserver(
@@ -632,14 +645,16 @@ const periodParts = (p: string) => p.split(/\s+[–-]\s+/);
       .v3 .hl-list li::before { content: ">"; position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 0.85rem; color: var(--accent); }
       .v3 .hl-list strong { color: var(--text); font-weight: 700; }
 
-      .v3 .more { margin-top: 0.55rem; }
-      .v3 .more > summary { list-style: none; cursor: pointer; display: inline-block; font-family: var(--mono); font-size: 0.82rem; color: var(--accent); padding: 0.2rem 0; }
-      .v3 .more > summary::-webkit-details-marker { display: none; }
-      .v3 .more > summary::before { content: "[+] "; }
-      .v3 .more[open] > summary::before { content: "[−] "; }
-      .v3 .more .more__close, .v3 .more[open] .more__open { display: none; }
-      .v3 .more[open] .more__close { display: inline; }
-      .v3 .more[open] > summary { margin-bottom: 0.55rem; }
+      .v3 .more {
+        display: inline-block; margin-top: 0.6rem; padding: 0.2rem 0; background: none; border: 0; cursor: pointer;
+        font-family: var(--mono); font-size: 0.82rem; color: var(--accent); text-align: left;
+      }
+      .v3 .more[hidden] { display: none; }
+      .v3 .more::before { content: "[+] "; }
+      .v3 .more[aria-expanded="true"]::before { content: "[−] "; }
+      .v3 .more .more__close, .v3 .more[aria-expanded="true"] .more__open { display: none; }
+      .v3 .more[aria-expanded="true"] .more__close { display: inline; }
+      .v3 .more:hover .more__open, .v3 .more:hover .more__close { text-decoration: underline; }
 
       .v3 .mono-link {
         display: inline-block; margin-top: 1rem; font-family: var(--mono); font-size: 0.82rem; color: var(--accent);
