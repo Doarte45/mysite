@@ -46,6 +46,24 @@ const sections = [
 ];
 const sec = Object.fromEntries(sections.map((s, i) => [s.id, { ...s, n: String(i + 1).padStart(2, "0") }]));
 
+// Split the summary into sentences so the hero can lift the "Seeking …" line
+// and the About block doesn't repeat what the hero already says.
+const sentences = cv.summary.match(/[^.!?]+(?:[.!?](?=\s|$))+/g)?.map((t) => t.trim()) ?? [cv.summary];
+const seekingSentence = sentences.find((t) => /^seeking\b/i.test(t));
+const targetRoles = seekingSentence
+  ?.replace(/^seeking\s+/i, "").replace(/\s+roles?\.?$/i, "")
+  .split(/,\s*(?:or\s+|and\s+)?|\s+or\s+/).map((r) => r.trim()).filter(Boolean) ?? [];
+const aboutSentences = sentences.filter(
+  (t, i) => t !== seekingSentence && !(i === 0 && /available/i.test(t)),
+);
+
+const escapeHtml = (t: string) =>
+  t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+// Emphasise quantified results (percentages, costs, counts) so they pop when skimming.
+const METRIC = /(~?\d[\d.]*%|\$\d[\d.]*(?:\/session)?|\d+\+?\s(?:hours|hands-on labs)|\d+-session|\bzero sessions\b|\bsix simultaneously active faults\b)/gi;
+const emph = (t: string) => escapeHtml(t).replace(METRIC, '<strong class="metric">$1</strong>');
+const BULLET_CAP = 4;
+
 const projectHref = (url: string) => (url.startsWith("http") ? url : `https://${url}`);
 const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 ---
@@ -108,8 +126,13 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         <div class="hero__text">
           <p class="status"><span class="status__dot" aria-hidden="true"></span>Available for full-time roles</p>
           <h1>{firstName} <span class="h1__last">{lastName}</span></h1>
-          <p class="hero__role">{cv.role}</p>
           <p class="hero__tagline">{cv.tagline}.</p>
+          {targetRoles.length > 0 && (
+            <div class="targets">
+              <span class="targets__label">Open to</span>
+              <ul>{targetRoles.map((r) => <li>{r}</li>)}</ul>
+            </div>
+          )}
 
           <div class="cta-row">
             <a class="btn btn--primary" href={resumeHref} target="_blank" rel="noopener">
@@ -132,6 +155,25 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         </div>
 
         <figure class="portrait">
+          <svg class="topo" viewBox="0 0 400 520" aria-hidden="true">
+            <g class="topo__links">
+              <path id="l1" d="M24 118 L24 34 L376 34" />
+              <path id="l3" d="M376 34 L380 290" /><path id="l4" d="M380 290 L322 496" />
+              <path id="l5" d="M24 118 L22 396" /><path id="l6" d="M22 396 L22 496 L322 496" />
+            </g>
+            <g class="topo__packets">
+              <circle r="3"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#l1" /></animateMotion></circle>
+              <circle r="3"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#l5" /></animateMotion></circle>
+              <circle r="3"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#l3" /></animateMotion></circle>
+            </g>
+            <g class="topo__nodes">
+              <g transform="translate(24 118)"><rect x="-16" y="-10" width="32" height="20" rx="4" /><text y="3.5">R1</text></g>
+              <g transform="translate(376 34)"><rect x="-16" y="-10" width="32" height="20" rx="4" /><text y="3.5">R2</text></g>
+              <g transform="translate(380 290)"><rect x="-16" y="-10" width="32" height="20" rx="4" /><text y="3.5">R3</text></g>
+              <g transform="translate(22 396)"><rect x="-18" y="-10" width="36" height="20" rx="4" /><text y="3.5">DMZ</text></g>
+              <g transform="translate(322 496)"><rect x="-18" y="-10" width="36" height="20" rx="4" /><text y="3.5">SOC</text></g>
+            </g>
+          </svg>
           <div class="portrait__frame">
             <span class="corner corner--tl" aria-hidden="true"></span>
             <span class="corner corner--tr" aria-hidden="true"></span>
@@ -179,7 +221,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       <!-- ABOUT -->
       <section class="about" aria-label="About">
         <p class="about__label">// about</p>
-        <p class="about__text">{cv.summary}</p>
+        <p class="about__text">{aboutSentences.join(" ")}</p>
       </section>
 
       <!-- EXPERIENCE -->
@@ -200,8 +242,19 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
                 <p class="org"><strong>{exp.company}</strong> <span class="org__sep">·</span> {exp.location}</p>
                 {exp.summary && <p class="desc">{exp.summary}</p>}
                 <ul class="bullets">
-                  {exp.highlights.map((h) => <li>{h}</li>)}
+                  {exp.highlights.slice(0, BULLET_CAP).map((h) => <li set:html={emph(h)} />)}
                 </ul>
+                {exp.highlights.length > BULLET_CAP && (
+                  <details class="more">
+                    <summary>
+                      <span class="more__open">Show {exp.highlights.length - BULLET_CAP} more</span>
+                      <span class="more__close">Show less</span>
+                    </summary>
+                    <ul class="bullets">
+                      {exp.highlights.slice(BULLET_CAP).map((h) => <li set:html={emph(h)} />)}
+                    </ul>
+                  </details>
+                )}
               </div>
             </li>
           ))}
@@ -224,7 +277,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
               {p.description && <p class="desc">{p.description}</p>}
               {p.highlights && (
                 <ul class="bullets">
-                  {p.highlights.map((h) => <li>{h}</li>)}
+                  {p.highlights.map((h) => <li set:html={emph(h)} />)}
                 </ul>
               )}
               <div class="project__foot">
@@ -286,7 +339,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
                       )
                     )}
                   </div>
-                  {c.detail && <p class="desc desc--sm">{c.detail}</p>}
+                  {c.detail && <p class="desc desc--sm" set:html={emph(c.detail)} />}
                   {c.badgeId && (
                     <a class="text-link" href={`https://www.credly.com/badges/${c.badgeId}`} target="_blank" rel="noopener noreferrer">
                       Verify credential <span aria-hidden="true">↗</span>
@@ -308,7 +361,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         </div>
         <div class="skills">
           {techSkills.map((g) => (
-            <div class="skill-group">
+            <div class="skill-row">
               <h3>{g.heading}</h3>
               <ul class="chips">
                 {g.items.map((s) => <li class="chip chip--lg">{s.charAt(0).toUpperCase() + s.slice(1)}</li>)}
@@ -327,8 +380,12 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         </div>
         <div class="contact__panel">
           <div>
-            <p class="contact__lead">Hiring for a SOC, network security or IT support role? Let's talk.</p>
+            <p class="contact__lead">{targetRoles.length ? `Hiring for ${targetRoles.join(", ").replace(/, ([^,]*)$/, " or $1")}? Let's talk.` : "Let's talk."}</p>
             {emailLink && <a class="contact__email" href={emailLink.href}>{emailLink.value}</a>}
+            <div class="cta-row cta-row--contact">
+              {emailLink && <a class="btn btn--primary" href={emailLink.href}>Send an email <span aria-hidden="true">→</span></a>}
+              <a class="btn" href={resumeHref} target="_blank" rel="noopener">Download CV <span class="btn__meta">PDF</span></a>
+            </div>
           </div>
           <ul class="contact__list">
             {cv.contact.map((c) => (
@@ -585,6 +642,37 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       }
       .v3 .fact dd { margin: 0; font-weight: 500; font-size: 0.95rem; line-height: 1.4; }
 
+      .v3 .portrait { position: relative; }
+      .v3 .topo { position: absolute; z-index: -1; left: -50px; top: -50px; width: calc(100% + 100px); height: auto; aspect-ratio: 400 / 520; pointer-events: none; overflow: visible; }
+      .v3 .topo__links path { fill: none; stroke: var(--accent-line); stroke-width: 1.25; stroke-dasharray: 4 5; }
+      .v3 .topo__packets circle { fill: var(--accent); }
+      .v3 .topo__nodes rect { fill: var(--surface); stroke: var(--accent-line); stroke-width: 1.25; }
+      .v3 .topo__nodes text { font-family: var(--mono); font-size: 9px; text-anchor: middle; fill: var(--accent); font-weight: 700; }
+      @media (prefers-reduced-motion: reduce) { .v3 .topo__packets { display: none; } }
+
+      .v3 .targets { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: -1rem 0 2.25rem; }
+      .v3 .targets__label { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+      .v3 .targets ul { display: contents; list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+      .v3 .targets li {
+        font-size: 0.9rem; font-weight: 600; color: var(--accent);
+        padding: 0.3rem 0.7rem; border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--accent-line);
+      }
+
+      .v3 .metric { color: var(--text); font-weight: 700; background: linear-gradient(transparent 62%, var(--accent-soft) 62%); }
+
+      .v3 .more { margin-top: 0.55rem; }
+      .v3 .more > summary {
+        list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;
+        font-family: var(--mono); font-size: 0.8rem; color: var(--accent); padding: 0.25rem 0;
+      }
+      .v3 .more > summary::-webkit-details-marker { display: none; }
+      .v3 .more > summary::before { content: "+"; font-weight: 700; width: 1rem; text-align: center; }
+      .v3 .more[open] > summary::before { content: "\2212"; }
+      .v3 .more .more__close, .v3 .more[open] .more__open { display: none; }
+      .v3 .more[open] .more__close { display: inline; }
+      .v3 .more[open] > summary { margin-bottom: 0.55rem; }
+      .v3 .more > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
       /* ---------- about ---------- */
       .v3 .about { padding: 2.5rem 0 1rem; max-width: 760px; }
       .v3 .about__label { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); margin: 0 0 0.75rem; }
@@ -593,10 +681,14 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       /* ---------- sections ---------- */
       .v3 .section { padding: 5rem 0 0; }
       .v3 .section__head {
-        display: flex; align-items: baseline; gap: 0.9rem;
+        display: flex; align-items: center; gap: 0.9rem;
         padding-bottom: 1rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--rule);
       }
-      .v3 .section__num { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); font-weight: 700; }
+      .v3 .section__num {
+        font-family: var(--mono); font-size: 0.78rem; color: var(--accent); font-weight: 700;
+        padding: 0.2rem 0.45rem; border: 1px solid var(--accent-line); border-radius: 6px; background: var(--accent-soft);
+      }
+      .v3 .section__num::before { content: "0x"; opacity: 0.6; }
       .v3 h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0; font-weight: 700; }
       .v3 .section__alias { margin-left: auto; font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
       .v3 .section__alias::before { content: "// "; color: var(--accent); }
@@ -662,13 +754,13 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .project--featured .bullets { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem 2.5rem; }
       .v3 .project__flag {
         align-self: flex-start; margin-bottom: 0.9rem;
-        font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+        font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
         color: var(--accent); background: var(--accent-soft); padding: 0.25rem 0.6rem; border-radius: 6px;
       }
 
       .v3 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.45rem; }
       .v3 .chip {
-        font-family: var(--mono); font-size: 0.74rem; line-height: 1; color: var(--text-2);
+        font-family: var(--mono); font-size: 0.78rem; line-height: 1; color: var(--text-2);
         padding: 0.45rem 0.6rem; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg);
       }
       .v3 .chip--lg { font-family: var(--sans); font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; }
@@ -695,11 +787,12 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
       .v3 .cert__badge:hover img { transform: scale(1.05); }
 
       /* skills */
-      .v3 .skills { columns: 3 280px; column-gap: 1.25rem; }
-      .v3 .skill-group { break-inside: avoid; margin-bottom: 1.25rem; padding: 1.4rem 1.5rem; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); }
-      .v3 .skill-group h3 {
+      .v3 .skills { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+      .v3 .skill-row { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 1.5rem; align-items: center; padding: 1.1rem 1.5rem; border-top: 1px solid var(--rule); }
+      .v3 .skill-row:first-child { border-top: 0; }
+      .v3 .skill-row h3 {
         font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
-        color: var(--accent); font-weight: 700; margin: 0 0 1rem;
+        color: var(--accent); font-weight: 700; margin: 0;
       }
 
       /* contact */
@@ -712,6 +805,7 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         border: 1px solid var(--accent-line); box-shadow: var(--shadow);
       }
       .v3 .contact__lead { font-size: 1.5rem; line-height: 1.3; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 1.25rem; max-width: 26ch; text-wrap: balance; }
+      .v3 .cta-row--contact { margin-top: 1.75rem; }
       .v3 .contact__email {
         font-family: var(--mono); font-size: clamp(0.95rem, 2vw, 1.15rem); font-weight: 700; color: var(--accent);
         text-decoration: none; border-bottom: 2px solid var(--accent-line); overflow-wrap: anywhere;
@@ -751,21 +845,24 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
           overflow-x: auto; scrollbar-width: none;
         }
         .v3 .topnav::-webkit-scrollbar { display: none; }
-        .v3 .topnav a { white-space: nowrap; padding: 0.35rem 0.6rem; font-size: 0.85rem; }
+        .v3 .topnav a { white-space: nowrap; padding: 0.35rem 0.55rem; font-size: 0.84rem; }
+        .v3 .topnav { mask-image: linear-gradient(90deg, #000 85%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); padding-right: 2.5rem; }
         .v3 [id] { scroll-margin-top: 110px; }
         .v3 .hero {
-          grid-template-columns: minmax(0, 1fr) 104px;
+          grid-template-columns: minmax(0, 1fr) 92px;
           grid-template-areas: none;
-          gap: 1.5rem 1.25rem; padding: 2.5rem 0 2rem; align-items: start;
+          gap: 1.25rem 1rem; padding: 2rem 0 2rem; align-items: start;
         }
+        .v3 .topo { display: none; }
         .v3 .hero__text { display: contents; }
-        .v3 .status { grid-area: auto; grid-row: 1; grid-column: 1; align-self: end; justify-self: start; margin: 0; font-size: 0.66rem; white-space: nowrap; padding: 0.3rem 0.6rem; gap: 0.45rem; }
-        .v3 .portrait { grid-area: auto; grid-row: 1; grid-column: 2; }
+        .v3 .status { grid-area: auto; grid-row: 1; grid-column: 1 / -1; justify-self: start; margin: 0; font-size: 0.75rem; }
+        .v3 .hero__text > h1 { grid-row: 2; grid-column: 1; align-self: center; margin: 0; font-size: 2.35rem; }
+        .v3 .portrait { grid-area: auto; grid-row: 2; grid-column: 2; align-self: center; }
         .v3 .facts { grid-area: auto; grid-column: 1 / -1; }
-        .v3 .hero__text > :not(.status) { grid-column: 1 / -1; }
+        .v3 .hero__text > :not(.status):not(h1) { grid-column: 1 / -1; }
+        .v3 .targets { margin: 0; }
         .v3 h1 { margin-bottom: 0.75rem; }
-        .v3 .hero__role { margin: -0.75rem 0 0; font-size: 0.82rem; }
-        .v3 .hero__tagline { font-size: 1.05rem; margin: -0.5rem 0 0; }
+        .v3 .hero__tagline { font-size: 1.05rem; margin: 0; }
         .v3 .portrait__frame { padding: 4px; }
         .v3 .portrait__caption { display: none; }
         .v3 .corner { width: 10px; height: 10px; }
@@ -792,6 +889,8 @@ const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/
         .v3 .projects { grid-template-columns: 1fr; }
         .v3 .card, .v3 .project--featured { padding: 1.35rem; }
         .v3 .project--featured h3 { font-size: 1.3rem; }
+        .v3 .skill-row { grid-template-columns: 1fr; gap: 0.7rem; padding: 1rem 1.15rem; }
+        .v3 .cta-row--contact .btn { flex: 1 1 auto; justify-content: center; }
         .v3 .contact__panel { grid-template-columns: 1fr; padding: 1.5rem; gap: 1.5rem; }
         .v3 .contact__lead { font-size: 1.25rem; }
         .v3 .footer { padding: 1.5rem 1.25rem; margin-top: 3.5rem; }
