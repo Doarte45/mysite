@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { google } from "googleapis";
 import mammoth from "mammoth";
-import { parseCvMarkdown } from "./cv-extract.mjs";
+import { parseCvMarkdown, findPhoneNumbers } from "./cv-extract.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
@@ -54,7 +54,8 @@ async function docxToMarkdown(docxBuffer) {
 
 async function parseWithClaude(markdown) {
   console.log("Parsing CV with Claude...");
-  const { cv, usage } = await parseCvMarkdown(markdown, { apiKey: ANTHROPIC_API_KEY });
+  const { cv, usage, removedPhones } = await parseCvMarkdown(markdown, { apiKey: ANTHROPIC_API_KEY });
+  if (removedPhones.length) console.log(`  removed ${removedPhones.length} phone contact(s) from cv.json`);
   console.log(
     `  tokens: input=${usage.input_tokens} output=${usage.output_tokens}` +
       (usage.cache_read_input_tokens ? ` (cache read=${usage.cache_read_input_tokens})` : "") +
@@ -99,16 +100,32 @@ function validate(cv) {
 async function main() {
   const { docxBuffer, pdfBuffer } = await downloadDoc();
   const markdown = await docxToMarkdown(docxBuffer);
+
+  // resume.pdf is exported verbatim from the Doc, so a phone number in the Doc would be
+  // published inside it. Refuse to overwrite the PDF unless explicitly allowed.
+  const phonesInDoc = findPhoneNumbers(markdown);
+  const writePdf = phonesInDoc.length === 0 || process.env.ALLOW_PHONE_IN_PDF === "1";
+
   const cv = await mergeBadgeFields(await parseWithClaude(markdown));
   validate(cv);
 
   await mkdir(dirname(CV_JSON_PATH), { recursive: true });
   await mkdir(dirname(RESUME_PDF_PATH), { recursive: true });
   await writeFile(CV_JSON_PATH, JSON.stringify(cv, null, 2) + "\n");
-  await writeFile(RESUME_PDF_PATH, pdfBuffer);
+  if (writePdf) await writeFile(RESUME_PDF_PATH, pdfBuffer);
 
   console.log(`\n✓ Wrote ${CV_JSON_PATH}`);
-  console.log(`✓ Wrote ${RESUME_PDF_PATH}`);
+  if (writePdf) {
+    const note = phonesInDoc.length ? " (contains a phone number: ALLOW_PHONE_IN_PDF=1)" : "";
+    console.log(`✓ Wrote ${RESUME_PDF_PATH}${note}`);
+  } else {
+    console.warn(
+      `\n⚠ Skipped ${RESUME_PDF_PATH}: the Google Doc contains ${phonesInDoc.length} phone number(s), ` +
+        "which would be published inside the PDF. Remove the number from the Doc and re-run, " +
+        "or set ALLOW_PHONE_IN_PDF=1 to publish it anyway. The previous resume.pdf was left unchanged.",
+    );
+    process.exitCode = 2;
+  }
 }
 
 main().catch((err) => {

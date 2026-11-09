@@ -160,7 +160,36 @@ export async function parseCvMarkdown(markdown, opts = {}) {
   if (response.stop_reason === "max_tokens") throw new Error("Claude hit max_tokens before finishing the CV");
   const toolUse = response.content.find((b) => b.type === "tool_use");
   if (!toolUse) throw new Error(`Claude did not return a tool_use block (stop_reason=${response.stop_reason})`);
-  return { cv: normalizeSiteFields(toolUse.input), usage: response.usage };
+  const cv = normalizeSiteFields(toolUse.input);
+  const removedPhones = stripPhoneContacts(cv);
+  return { cv, usage: response.usage, removedPhones };
+}
+
+// ---- Privacy: phone numbers never leave the Google Doc --------------------------------
+const PHONE_LABEL = /phone|tel[eé]fono|^tel$|mobile|m[oó]vil|cell|celular|whats\s*app/i;
+// Digit runs that look like a phone number: optional +, 10–15 digits with spaces, dots,
+// dashes or parentheses in between. Date ranges ("2025–2026") use en dashes and stay out.
+const PHONE_LIKE = /(?:\+\s?)?\(?\d[\d\s().-]{7,}\d/g;
+
+/** Phone-number-like strings found in free text (e.g. the Doc's markdown). */
+export function findPhoneNumbers(text) {
+  return [...String(text).matchAll(PHONE_LIKE)]
+    .map((m) => m[0].trim())
+    .filter((s) => {
+      const digits = s.replace(/\D/g, "");
+      return digits.length >= 10 && digits.length <= 15;
+    });
+}
+
+/** Removes phone contacts from the CV in place; returns what was removed. */
+export function stripPhoneContacts(cv) {
+  const removed = [];
+  cv.contact = (cv.contact ?? []).filter((c) => {
+    const isPhone = /^tel:/i.test(c.href ?? "") || PHONE_LABEL.test(c.label ?? "") || findPhoneNumbers(c.value ?? "").length > 0;
+    if (isPhone) removed.push(c.value);
+    return !isPhone;
+  });
+  return removed;
 }
 
 /**
