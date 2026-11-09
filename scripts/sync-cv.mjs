@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { google } from "googleapis";
 import mammoth from "mammoth";
-import { parseCvMarkdown, findPhoneNumbers } from "./cv-extract.mjs";
+import { parseCvMarkdown, findPhoneNumbers, MODEL } from "./cv-extract.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
@@ -54,7 +54,8 @@ async function docxToMarkdown(docxBuffer) {
 
 async function parseWithClaude(markdown) {
   console.log("Parsing CV with Claude...");
-  const { cv, usage, removedPhones } = await parseCvMarkdown(markdown, { apiKey: ANTHROPIC_API_KEY });
+  const { cv, usage, removedPhones, servedBy } = await parseCvMarkdown(markdown, { apiKey: ANTHROPIC_API_KEY });
+  if (servedBy && servedBy !== MODEL) console.log(`  note: the request fell back to ${servedBy}`);
   if (removedPhones.length) console.log(`  removed ${removedPhones.length} phone contact(s) from cv.json`);
   console.log(
     `  tokens: input=${usage.input_tokens} output=${usage.output_tokens}` +

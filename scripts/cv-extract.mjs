@@ -1,119 +1,69 @@
 // CV extraction: markdown → structured CV via Claude. Shared by sync-cv.mjs and
-// any test harness, so both exercise exactly the same schema and prompt.
+// any test harness, so both exercise exactly the same schema, prompt and clean-up.
 import Anthropic from "@anthropic-ai/sdk";
 
-export const MODEL = "claude-sonnet-5";
+export const MODEL = "claude-sonnet-5-5";
+// Extraction is well specified, so medium thinking is plenty (Sonnet 5.5 defaults to high).
+const EFFORT = "medium";
 
-const METRIC_ITEM = {
-  type: "object",
-  properties: {
-    value: { type: "string" },
-    label: { type: "string" },
-  },
-  required: ["value", "label"],
-};
+// Structured outputs: every object needs additionalProperties:false, and array
+// constraints such as maxItems aren't supported (limits are enforced below instead).
+const obj = (properties, required) => ({ type: "object", properties, required, additionalProperties: false });
+const str = { type: "string" };
+const strArr = { type: "array", items: str };
 
-export const CV_TOOL_SCHEMA = {
-  type: "object",
-  properties: {
-    name: { type: "string" },
-    role: { type: "string" },
-    tagline: { type: "string" },
-    location: { type: "string" },
-    relocation: { type: "string" },
-    availability: { type: "string" },
-    targetRoles: { type: "array", items: { type: "string" } },
-    contact: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          label: { type: "string" },
-          value: { type: "string" },
-          href: { type: "string" },
-        },
-        required: ["label", "value", "href"],
-      },
-    },
-    summary: { type: "string" },
+export const CV_SCHEMA = obj(
+  {
+    name: str,
+    role: str,
+    tagline: str,
+    location: str,
+    relocation: str,
+    availability: str,
+    targetRoles: strArr,
+    contact: { type: "array", items: obj({ label: str, value: str, href: str }, ["label", "value", "href"]) },
+    summary: str,
     experience: {
       type: "array",
-      items: {
-        type: "object",
-        properties: {
-          role: { type: "string" },
-          company: { type: "string" },
-          location: { type: "string" },
-          period: { type: "string" },
-          summary: { type: "string" },
-          highlights: { type: "array", items: { type: "string" } },
-        },
-        required: ["role", "company", "location", "period", "summary", "highlights"],
-      },
+      items: obj(
+        { role: str, company: str, location: str, period: str, summary: str, highlights: strArr },
+        ["role", "company", "location", "period", "summary", "highlights"],
+      ),
     },
     projects: {
       type: "array",
-      items: {
-        type: "object",
-        properties: {
-          name: { type: "string" },
-          year: { type: "string" },
-          description: { type: "string" },
-          highlights: { type: "array", items: { type: "string" } },
-          stack: { type: "array", items: { type: "string" } },
-          url: { type: "string" },
+      items: obj(
+        {
+          name: str,
+          year: str,
+          description: str,
+          highlights: strArr,
+          stack: strArr,
+          url: str,
           featured: { type: "boolean" },
-          metrics: { type: "array", items: METRIC_ITEM, maxItems: 4 },
+          metrics: { type: "array", items: obj({ value: str, label: str }, ["value", "label"]) },
         },
-        required: ["name", "year", "description", "stack"],
-      },
+        ["name", "year", "description", "stack"],
+      ),
     },
-    skills: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          heading: { type: "string" },
-          items: { type: "array", items: { type: "string" } },
-        },
-        required: ["heading", "items"],
-      },
-    },
+    skills: { type: "array", items: obj({ heading: str, items: strArr }, ["heading", "items"]) },
     education: {
       type: "array",
-      items: {
-        type: "object",
-        properties: {
-          degree: { type: "string" },
-          institution: { type: "string" },
-          period: { type: "string" },
-          detail: { type: "string" },
-        },
-        required: ["degree", "institution", "period"],
-      },
+      items: obj({ degree: str, institution: str, period: str, detail: str }, ["degree", "institution", "period"]),
     },
     certifications: {
       type: "array",
-      items: {
-        type: "object",
-        properties: {
-          name: { type: "string" },
-          issuer: { type: "string" },
-          date: { type: "string" },
-          detail: { type: "string" },
-        },
-        required: ["name", "issuer", "date"],
-      },
+      items: obj({ name: str, issuer: str, date: str, detail: str }, ["name", "issuer", "date"]),
     },
   },
-  required: [
+  [
     "name", "role", "tagline", "location", "contact", "summary",
     "experience", "projects", "skills", "education", "certifications",
     "targetRoles", "relocation", "availability",
   ],
-};
+);
 
-export const SYSTEM_PROMPT = `You extract a CV from markdown into a strict JSON shape and call the return_cv tool with the result.
+export const SYSTEM_PROMPT = `You extract a CV from markdown into a strict JSON shape.
 
 Rules:
 - Use the markdown as the only source of truth — do not invent or embellish.
@@ -126,6 +76,10 @@ Rules:
 - "skills" are grouped by heading. Preserve the user's groupings if present.
 - For dates, preserve the format used in the source (e.g., "August 2024 – December 2024", "Expected May 2026").
 - Email href should be "mailto:<email>"; LinkedIn href should be a full URL; Location href should be a Google Maps query URL.
+- Contact "value" is the text shown on the site, not the source's link text: for LinkedIn use the profile URL without the scheme (e.g. "linkedin.com/in/<handle>"); for the Location contact use only the place (e.g. "San Antonio, TX"). This applies only to the contact entry: the top-level "location" field keeps any relocation note from the source (e.g. "Chihuahua, MX (Open to relocation - Monterrey)").
+- Do not include a phone number in "contact", even if the source lists one.
+- Education "institution" is the institution name only — do not append its city or country.
+- Education "degree" is the full degree line exactly as written, including concentrations and modality notes (e.g. "Master of Science in Information Technology, Cybersecurity Concentration – Full-time, in-person"). "detail" is only for descriptive text listed under the degree (coursework, program notes).
 - All URLs (href, project url) must be absolute, including the "https://" scheme.
 - Use standard capitalization for "name" and other fields even if the source renders them in ALL CAPS for styling (e.g. "Andrés Duarte Ornelas", not "ANDRÉS DUARTE ORNELAS").
 
@@ -141,28 +95,37 @@ Site fields (used for the website's headline elements; they summarise what the s
   - Omit "metrics" (or use an empty array) when the project states no clear quantitative results.`;
 
 /**
- * Parse CV markdown with Claude.
+ * Parse CV markdown with Claude (structured outputs).
  * @param {string} markdown
- * @param {{ apiKey?: string, model?: string }} [opts]
- * @returns {Promise<{ cv: any, usage: any }>}
+ * @param {{ apiKey?: string, model?: string, effort?: string }} [opts]
+ * @returns {Promise<{ cv: any, usage: any, removedPhones: string[], servedBy: string }>}
  */
 export async function parseCvMarkdown(markdown, opts = {}) {
   const client = new Anthropic(opts.apiKey ? { apiKey: opts.apiKey } : {});
-  const response = await client.messages.create({
+  const response = await client.beta.messages.create({
     model: opts.model ?? MODEL,
     max_tokens: 16000,
+    // If a safety classifier declines (a cybersecurity CV can look like "cyber" content),
+    // the API retries the same request on a fallback model instead of failing the sync.
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: { effort: opts.effort ?? EFFORT, format: { type: "json_schema", schema: CV_SCHEMA } },
     system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-    tools: [{ name: "return_cv", description: "Return the structured CV.", input_schema: CV_TOOL_SCHEMA }],
-    tool_choice: { type: "tool", name: "return_cv" },
     messages: [{ role: "user", content: markdown }],
   });
 
-  if (response.stop_reason === "max_tokens") throw new Error("Claude hit max_tokens before finishing the CV");
-  const toolUse = response.content.find((b) => b.type === "tool_use");
-  if (!toolUse) throw new Error(`Claude did not return a tool_use block (stop_reason=${response.stop_reason})`);
-  const cv = normalizeSiteFields(toolUse.input);
+  if (response.stop_reason === "refusal") {
+    const d = response.stop_details;
+    throw new Error(`Claude declined to extract the CV (${d?.category ?? "no category"}${d?.explanation ? `: ${d.explanation}` : ""})`);
+  }
+  if (response.stop_reason !== "end_turn") {
+    throw new Error(`Claude stopped early (stop_reason=${response.stop_reason})`);
+  }
+  const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+  const cv = normalizeSiteFields(JSON.parse(text));
   const removedPhones = stripPhoneContacts(cv);
-  return { cv, usage: response.usage, removedPhones };
+  normalizeContacts(cv);
+  return { cv, usage: response.usage, removedPhones, servedBy: response.model };
 }
 
 // ---- Privacy: phone numbers never leave the Google Doc --------------------------------
@@ -190,6 +153,27 @@ export function stripPhoneContacts(cv) {
     return !isPhone;
   });
   return removed;
+}
+
+// LinkedIn display value comes from its href: the model tends to mangle percent-encoded
+// characters (e.g. "andr%C3%A9s") when copying them by hand. Contacts are sorted into a
+// fixed order since the model's ordering varies between runs.
+const CONTACT_ORDER = ["location", "linkedin", "email"];
+
+export function normalizeContacts(cv) {
+  for (const c of cv.contact ?? []) {
+    if (!/linkedin\.com/i.test(c.href ?? "")) continue;
+    try {
+      const url = new URL(c.href);
+      c.value = decodeURIComponent(`${url.hostname.replace(/^www\./, "")}${url.pathname}`).replace(/\/$/, "");
+    } catch {}
+  }
+  const rank = (c) => {
+    const i = CONTACT_ORDER.indexOf(String(c.label).toLowerCase());
+    return i === -1 ? CONTACT_ORDER.length : i;
+  };
+  cv.contact = [...(cv.contact ?? [])].sort((a, b) => rank(a) - rank(b));
+  return cv;
 }
 
 /**
