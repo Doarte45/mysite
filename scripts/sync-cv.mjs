@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { google } from "googleapis";
 import mammoth from "mammoth";
-import Anthropic from "@anthropic-ai/sdk";
+import { parseCvMarkdown, findPhoneNumbers, MODEL } from "./cv-extract.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
@@ -17,116 +17,6 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 if (!FILE_ID) throw new Error("GDRIVE_FILE_ID is not set in .env");
 if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not set in .env");
-
-const CV_TOOL_SCHEMA = {
-  type: "object",
-  properties: {
-    name: { type: "string" },
-    role: { type: "string" },
-    tagline: { type: "string" },
-    location: { type: "string" },
-    contact: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          label: { type: "string" },
-          value: { type: "string" },
-          href: { type: "string" },
-        },
-        required: ["label", "value", "href"],
-      },
-    },
-    summary: { type: "string" },
-    experience: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          role: { type: "string" },
-          company: { type: "string" },
-          location: { type: "string" },
-          period: { type: "string" },
-          summary: { type: "string" },
-          highlights: { type: "array", items: { type: "string" } },
-        },
-        required: ["role", "company", "location", "period", "summary", "highlights"],
-      },
-    },
-    projects: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          name: { type: "string" },
-          year: { type: "string" },
-          description: { type: "string" },
-          highlights: { type: "array", items: { type: "string" } },
-          stack: { type: "array", items: { type: "string" } },
-          url: { type: "string" },
-        },
-        required: ["name", "year", "description", "stack"],
-      },
-    },
-    skills: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          heading: { type: "string" },
-          items: { type: "array", items: { type: "string" } },
-        },
-        required: ["heading", "items"],
-      },
-    },
-    education: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          degree: { type: "string" },
-          institution: { type: "string" },
-          period: { type: "string" },
-          detail: { type: "string" },
-        },
-        required: ["degree", "institution", "period"],
-      },
-    },
-    certifications: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          name: { type: "string" },
-          issuer: { type: "string" },
-          date: { type: "string" },
-          detail: { type: "string" },
-        },
-        required: ["name", "issuer", "date"],
-      },
-    },
-  },
-  required: [
-    "name", "role", "tagline", "location", "contact", "summary",
-    "experience", "projects", "skills", "education", "certifications",
-  ],
-};
-
-const SYSTEM_PROMPT = `You extract a CV from markdown into a strict JSON shape and call the return_cv tool with the result.
-
-Rules:
-- Use the markdown as the only source of truth — do not invent or embellish.
-- If a field is missing in the source, use a sensible empty value (empty string or empty array). Never omit required fields.
-- Preserve original wording for prose fields (summary, highlights, descriptions).
-- "tagline" is a one-sentence professional headline. If not explicitly present, derive a concise one from the summary.
-- "highlights" are bullet points under each role. Split paragraphs into separate bullets if appropriate.
-- "stack" lists tools/technologies used in a project. Extract from inline mentions if no explicit list exists.
-- For projects with multi-sentence descriptions (or explicit bullet points in the source), keep "description" to a single overview sentence and put the remaining details as separate "highlights" bullets. Omit "highlights" for short one/two-sentence projects.
-- "skills" are grouped by heading. Preserve the user's groupings if present.
-- For dates, preserve the format used in the source (e.g., "August 2024 — December 2024", "Expected May 2026").
-- Email href should be "mailto:<email>"; LinkedIn href should be a full URL; Location href should be a Google Maps query URL.
-- All URLs (href, project url) must be absolute, including the "https://" scheme.
-- Use standard capitalization for "name" and other fields even if the source renders them in ALL CAPS for styling (e.g. "Andrés Duarte Ornelas", not "ANDRÉS DUARTE ORNELAS").`;
 
 async function downloadDoc() {
   const auth = new google.auth.GoogleAuth({
@@ -164,44 +54,15 @@ async function docxToMarkdown(docxBuffer) {
 
 async function parseWithClaude(markdown) {
   console.log("Parsing CV with Claude...");
-  const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-
-  const response = await client.messages.create({
-    model: "claude-sonnet-5",
-    max_tokens: 8192,
-    system: [
-      {
-        type: "text",
-        text: SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    tools: [
-      {
-        name: "return_cv",
-        description: "Return the structured CV.",
-        input_schema: CV_TOOL_SCHEMA,
-      },
-    ],
-    tool_choice: { type: "tool", name: "return_cv" },
-    messages: [{ role: "user", content: markdown }],
-  });
-
-  const toolUse = response.content.find((b) => b.type === "tool_use");
-  if (!toolUse) throw new Error("Claude did not return a tool_use block");
-
-  const usage = response.usage;
+  const { cv, usage, removedPhones, servedBy } = await parseCvMarkdown(markdown, { apiKey: ANTHROPIC_API_KEY });
+  if (servedBy && servedBy !== MODEL) console.log(`  note: the request fell back to ${servedBy}`);
+  if (removedPhones.length) console.log(`  removed ${removedPhones.length} phone contact(s) from cv.json`);
   console.log(
     `  tokens: input=${usage.input_tokens} output=${usage.output_tokens}` +
-      (usage.cache_read_input_tokens
-        ? ` (cache read=${usage.cache_read_input_tokens})`
-        : "") +
-      (usage.cache_creation_input_tokens
-        ? ` (cache create=${usage.cache_creation_input_tokens})`
-        : ""),
+      (usage.cache_read_input_tokens ? ` (cache read=${usage.cache_read_input_tokens})` : "") +
+      (usage.cache_creation_input_tokens ? ` (cache create=${usage.cache_creation_input_tokens})` : ""),
   );
-
-  return toolUse.input;
+  return cv;
 }
 
 // Badge fields (badgeId/badgeImage) are site-local enrichment that doesn't
@@ -240,16 +101,33 @@ function validate(cv) {
 async function main() {
   const { docxBuffer, pdfBuffer } = await downloadDoc();
   const markdown = await docxToMarkdown(docxBuffer);
+
+  // resume.pdf is exported verbatim from the Doc, so a phone number in the Doc would be
+  // published inside it. Refuse to overwrite the PDF unless explicitly allowed.
+  const phonesInDoc = findPhoneNumbers(markdown);
+  const writePdf = phonesInDoc.length === 0 || process.env.ALLOW_PHONE_IN_PDF === "1";
+
   const cv = await mergeBadgeFields(await parseWithClaude(markdown));
   validate(cv);
 
   await mkdir(dirname(CV_JSON_PATH), { recursive: true });
   await mkdir(dirname(RESUME_PDF_PATH), { recursive: true });
   await writeFile(CV_JSON_PATH, JSON.stringify(cv, null, 2) + "\n");
-  await writeFile(RESUME_PDF_PATH, pdfBuffer);
+  if (writePdf) await writeFile(RESUME_PDF_PATH, pdfBuffer);
 
   console.log(`\n✓ Wrote ${CV_JSON_PATH}`);
-  console.log(`✓ Wrote ${RESUME_PDF_PATH}`);
+  if (writePdf) {
+    const note = phonesInDoc.length ? " (contains a phone number: ALLOW_PHONE_IN_PDF=1)" : "";
+    console.log(`✓ Wrote ${RESUME_PDF_PATH}${note}`);
+  } else {
+    // Expected workflow: the Doc keeps the phone number and resume.pdf is exported by hand
+    // without it, so this is a notice, not a failure (build:fresh keeps working).
+    console.log(
+      `ℹ Kept the existing ${RESUME_PDF_PATH}: the Google Doc contains a phone number, ` +
+        "so its PDF export wasn't saved. Export a phone-free PDF by hand when the CV changes " +
+        "(or set ALLOW_PHONE_IN_PDF=1 to save the Doc's export as-is).",
+    );
+  }
 }
 
 main().catch((err) => {
