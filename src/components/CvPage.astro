@@ -525,31 +525,37 @@ const periodParts = (p: string) => p.split(/\s+[–—-]\s+/);
         btn.addEventListener("click", () => set(btn.getAttribute("aria-expanded") !== "true"));
       });
 
-      // Route-table scroll-spy. Tracks every section inside the band rather than the last one to
-      // enter it: side-by-side sections (certs + education) cross the band together, and a
-      // last-wins rule would always pick whichever comes later in the DOM.
+      // Route-table scroll-spy. The current section is the one whose top most recently crossed a
+      // reading line 40% down the viewport. Sections that start at the same height (certs +
+      // education, side by side) light up together; stacked sections never tie. Over the last
+      // 60% of a viewport of scroll the line slides to the bottom edge, so short sections at the
+      // end of the page (uplink) still become current once you reach the bottom.
       const links = new Map([...document.querySelectorAll<HTMLAnchorElement>("[data-nav]")].map((a) => [a.dataset.nav!, a]));
-      const inBand = new Set<string>();
-      const io = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (e.isIntersecting) inBand.add(e.target.id);
-            else inBand.delete(e.target.id);
-          }
-          if (!inBand.size) return; // between sections: keep the last highlight
-          links.forEach((a, id) => {
-            if (inBand.has(id)) a.setAttribute("aria-current", "true");
-            else a.removeAttribute("aria-current");
-          });
-        },
-        { rootMargin: "-40% 0px -55% 0px" },
-      );
-      links.forEach((_, id) => {
-        const el = document.getElementById(id);
-        if (el) io.observe(el);
-      });
-      const hero = document.getElementById("top");
-      if (hero) io.observe(hero);
+      const targets = [...links.keys()].map((id) => document.getElementById(id)).filter((el): el is HTMLElement => !!el);
+      const READ_AT = 0.4;
+      let frame = 0;
+      const spy = () => {
+        frame = 0;
+        const vh = window.innerHeight;
+        const remaining = document.documentElement.scrollHeight - (window.scrollY + vh);
+        const ramp = vh * (1 - READ_AT);
+        const line = vh * READ_AT + Math.max(0, ramp - remaining);
+        let top = -Infinity;
+        for (const el of targets) {
+          const t = el.getBoundingClientRect().top;
+          if (t <= line && t > top) top = t;
+        }
+        links.forEach((a, id) => {
+          const t = document.getElementById(id)?.getBoundingClientRect().top;
+          if (t !== undefined && Math.abs(t - top) < 2) a.setAttribute("aria-current", "true");
+          else a.removeAttribute("aria-current");
+        });
+      };
+      const queue = () => { if (!frame) frame = requestAnimationFrame(spy); };
+      window.addEventListener("scroll", queue, { passive: true });
+      window.addEventListener("resize", queue);
+      new ResizeObserver(queue).observe(document.body); // "show more" toggles change the page height
+      spy();
     </script>
 
     <style is:global>
