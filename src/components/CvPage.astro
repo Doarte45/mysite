@@ -525,15 +525,22 @@ const periodParts = (p: string) => p.split(/\s+[–—-]\s+/);
         btn.addEventListener("click", () => set(btn.getAttribute("aria-expanded") !== "true"));
       });
 
-      // Route-table scroll-spy.
+      // Route-table scroll-spy. Tracks every section inside the band rather than the last one to
+      // enter it: side-by-side sections (certs + education) cross the band together, and a
+      // last-wins rule would always pick whichever comes later in the DOM.
       const links = new Map([...document.querySelectorAll<HTMLAnchorElement>("[data-nav]")].map((a) => [a.dataset.nav!, a]));
+      const inBand = new Set<string>();
       const io = new IntersectionObserver(
         (entries) => {
           for (const e of entries) {
-            if (!e.isIntersecting) continue;
-            links.forEach((a) => a.removeAttribute("aria-current"));
-            links.get(e.target.id)?.setAttribute("aria-current", "true");
+            if (e.isIntersecting) inBand.add(e.target.id);
+            else inBand.delete(e.target.id);
           }
+          if (!inBand.size) return; // between sections: keep the last highlight
+          links.forEach((a, id) => {
+            if (inBand.has(id)) a.setAttribute("aria-current", "true");
+            else a.removeAttribute("aria-current");
+          });
         },
         { rootMargin: "-40% 0px -55% 0px" },
       );
