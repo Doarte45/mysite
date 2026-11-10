@@ -681,7 +681,7 @@ const periodParts = (p: string) => p.split(/\s+[–—-]\s+/);
       .v3 .slash { color: var(--accent); }
 
       .v3 .hl-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.55rem; }
-      .v3 .hl-list li { position: relative; padding-left: 1.3rem; font-size: 1rem; line-height: 1.6; color: var(--text-2); max-width: 62ch; }
+      .v3 .hl-list li { position: relative; padding-left: 1.3rem; font-size: 1rem; line-height: 1.6; color: var(--text-2); max-width: 62ch; overflow-wrap: anywhere; }
       .v3 .hl-list li::before { content: ">"; position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 0.85rem; color: var(--accent); }
       .v3 .hl-list strong { color: var(--text); font-weight: 700; }
 
